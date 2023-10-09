@@ -196,14 +196,21 @@ class Sequence(Dataset):
         self.mode = mode
         self.name_idx = name_idx
         self.visualize_samples = visualize
+
         # Get Test Timestamp File
-        test_timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
-        assert test_timestamp_file.is_file()
+        if self.mode == "test":
+            timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
+        elif self.mode == "train":
+            timestamp_file = seq_path / 'optical_flow_forward_timestamps.txt'
+        
+        assert timestamp_file.is_file()
         file = np.genfromtxt(
-            test_timestamp_file,
+            timestamp_file,
             delimiter=','
         )
-        self.idx_to_visualize = file[:,2]
+
+        if self.mode == "test":
+            self.idx_to_visualize = file[:,2]
 
         # Save output dimensions
         self.height = 480
@@ -223,11 +230,16 @@ class Sequence(Dataset):
         self.delta_t_us = delta_t_ms * 1000
 
         #Load and compute timestamps and indices
-        timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
-        image_indices = np.arange(len(timestamps_images))
-        # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
-        self.timestamps_flow = timestamps_images[::2][1:-1]
-        self.indices = image_indices[::2][1:-1]
+        if self.mode == "test":
+            timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
+            image_indices = np.arange(len(timestamps_images))
+            # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
+            self.timestamps_flow = timestamps_images[::2][1:-1]
+            self.indices = image_indices[::2][1:-1]
+
+        elif self.mode == "train":
+            self.timestamps_flow = file
+            pass
 
         # Left events only
         ev_dir_location = seq_path / 'events_left'
@@ -241,6 +253,11 @@ class Sequence(Dataset):
             self.rectify_ev_map = h5_rect['rectify_map'][()]
 
         self._finalizer = weakref.finalize(self, self.close_callback, self.h5f)
+
+        # Localize event files
+        events_dir = Path(seq_path / 'optical_flow_forward_event')
+        assert events_dir.is_dir()
+        self.event_file_paths = list(events_dir.iterdir())
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
@@ -296,18 +313,32 @@ class Sequence(Dataset):
         # First entry corresponds to all events BEFORE the flow map
         # Second entry corresponds to all events AFTER the flow map (corresponding to the actual fwd flow)
         names = ['event_volume_old', 'event_volume_new']
-        ts_start = [self.timestamps_flow[index] - self.delta_t_us, self.timestamps_flow[index]]
-        ts_end = [self.timestamps_flow[index], self.timestamps_flow[index] + self.delta_t_us]
+        output = dict()
 
-        file_index = self.indices[index]
+        assert index < len(self.timestamps_flow)
 
-        output = {
-            'file_index': file_index,
-            'timestamp': self.timestamps_flow[index]
-        }
-        # Save sample for benchmark submission
-        output['save_submission'] = file_index in self.idx_to_visualize
-        output['visualize'] = self.visualize_samples
+        if self.mode == "test":
+            # Start and End times of the flow subsequences
+            ts_start = [self.timestamps_flow[index] - self.delta_t_us, self.timestamps_flow[index]]
+            ts_end = [self.timestamps_flow[index], self.timestamps_flow[index] + self.delta_t_us]
+
+            file_index = self.indices[index]
+            output['file_index'] = file_index
+            output['timestamp'] = self.timestamps_flow[index]
+
+            # Save sample for benchmark submission
+            output['save_submission'] = file_index in self.idx_to_visualize
+            output['visualize'] = self.visualize_samples
+        
+        elif self.mode == "train":
+            # Start and End times of the flow subsequences
+            t0, t1 = self.timestamps_flow[index]
+            ts_start = [t0, (t0+t1)//2]
+            ts_end = [(t0+t1)//2, t1]
+
+            # Timestamp
+            output['timestamp'] = self.timestamps_flow[index]
+
 
         for i in range(len(names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
@@ -337,10 +368,18 @@ class Sequence(Dataset):
                 event_representation = self.events_to_voxel_grid(p, t, x_rect, y_rect)
                 output[names[i]] = event_representation
             output['name_map']=self.name_idx
+
+        # Also include optical flow ground trugh when training
+        flow_path = Path(self.event_file_paths[index])
+        output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
+
         return output
 
     def __getitem__(self, idx):
-        sample =  self.get_data_sample(idx)
+        try:
+            sample =  self.get_data_sample(idx)
+        except AssertionError:
+            raise StopIteration
         return sample
 
 
@@ -410,40 +449,40 @@ class SequenceRecurrent(Sequence):
 
 class DatasetProvider:
     def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
-                 type='standard', config=None, visualize=False):
-        test_path = dataset_path / 'test'
+                 mode = 'test', type='standard', config=None, visualize=False):
+        path = dataset_path / mode
         assert dataset_path.is_dir(), str(dataset_path)
-        assert test_path.is_dir(), str(test_path)
+        assert path.is_dir(), str(path)
         assert delta_t_ms == 100
         self.config=config
-        self.name_mapper_test = []
+        self.name_mapper = []
 
-        test_sequences = list()
-        for child in test_path.iterdir():
-            self.name_mapper_test.append(str(child).split("/")[-1])
+        sequences = list()
+        for child in path.iterdir():
+            self.name_mapper.append(str(child).split("/")[-1])
             if type == 'standard':
-                test_sequences.append(Sequence(child, representation_type, 'test', delta_t_ms, num_bins,
+                sequences.append(Sequence(child, representation_type, mode, delta_t_ms, num_bins,
                                                transforms=[],
-                                               name_idx=len(self.name_mapper_test)-1,
+                                               name_idx=len(self.name_mapper)-1,
                                                visualize=visualize))
             elif type == 'warm_start':
-                test_sequences.append(SequenceRecurrent(child, representation_type, 'test', delta_t_ms, num_bins,
+                sequences.append(SequenceRecurrent(child, representation_type, mode, delta_t_ms, num_bins,
                                                         transforms=[], sequence_length=1,
-                                                        name_idx=len(self.name_mapper_test)-1,
+                                                        name_idx=len(self.name_mapper)-1,
                                                         visualize=visualize))
             else:
                 raise Exception('Please provide a valid subtype [standard/warm_start] in config file!')
 
-        self.test_dataset = torch.utils.data.ConcatDataset(test_sequences)
+        self.dataset = torch.utils.data.ConcatDataset(sequences)
 
-    def get_test_dataset(self):
-        return self.test_dataset
+    def get_dataset(self):
+        return self.dataset
 
 
     def get_name_mapping_test(self):
-        return self.name_mapper_test
+        return self.name_mapper
 
     def summary(self, logger):
         logger.write_line("================================== Dataloader Summary ====================================", True)
         logger.write_line("Loader Type:\t\t" + self.__class__.__name__, True)
-        logger.write_line("Number of Voxel Bins: {}".format(self.test_dataset.datasets[0].num_bins), True)
+        logger.write_line("Number of Voxel Bins: {}".format(self.dataset.datasets[0].num_bins), True)
