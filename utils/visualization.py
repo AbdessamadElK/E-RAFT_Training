@@ -92,7 +92,7 @@ class BaseVisualizer(object):
 
         imageio.imwrite(os.path.join(parent_path, file_name), flow_map, format='PNG-FI')
 
-class FlowVisualizerEvents(BaseVisualizer):
+"""class FlowVisualizerEvents(BaseVisualizer):
     def __init__(self, dataloader, save_path, clamp_flow=True, additional_args=None):
         super(FlowVisualizerEvents, self).__init__(dataloader, save_path, additional_args=additional_args)
         self.flow_scaling = 0
@@ -157,6 +157,7 @@ class FlowVisualizerEvents(BaseVisualizer):
         flow_est[~batch['gt_valid_mask'][batch_idx].bool()] = 0.0
         self.visualize_flow_colours(flow_est, batch['idx'][batch_idx], epoch=epoch,
                                     is_gt=False, fix_scaling=scaling, suffix='_masked')
+"""
 
 class DsecFlowVisualizer(BaseVisualizer):
     def __init__(self, dataloader, save_path, additional_args=None):
@@ -166,7 +167,7 @@ class DsecFlowVisualizer(BaseVisualizer):
             os.mkdir(os.path.join(self.visu_path, name))
             os.mkdir(os.path.join(self.submission_path, name))
 
-    def visualize_events(self, image, batch, batch_idx, sequence_name):
+    def visualize_events(self, batch, batch_idx, sequence_name):
         sequence_idx = [i for i, e in enumerate(self.additional_args['name_mapping']) if e == sequence_name][0]
         delta_t_us = self.dataloader.dataset.datasets[sequence_idx].delta_t_us
         loader_instance = self.dataloader.dataset.datasets[sequence_idx]
@@ -386,7 +387,7 @@ def plot_points_on_background(points_coordinates,
 def visualize_optical_flow(flow, savepath=None, return_image=False, text=None, scaling=None):
     # flow -> numpy array 2 x height x width
     # 2,h,w -> h,w,2
-    flow = flow.transpose(1,2,0)
+    # flow = flow.transpose(1,2,0)
     flow[numpy.isinf(flow)]=0
     # Use Hue, Saturation, Value colour model
     hsv = numpy.zeros((flow.shape[0], flow.shape[1], 3), dtype=float)

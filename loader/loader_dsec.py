@@ -257,7 +257,7 @@ class Sequence(Dataset):
         # Localize event files
         events_dir = Path(seq_path / 'optical_flow_forward_event')
         assert events_dir.is_dir()
-        self.event_file_paths = list(events_dir.iterdir())
+        self.event_file_paths = sorted(events_dir.iterdir())
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
