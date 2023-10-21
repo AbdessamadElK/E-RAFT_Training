@@ -11,6 +11,7 @@ from utils.dsec_utils import RepresentationType
 """
 #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
 
+#Fine grained : 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
 """
 
 # sys.path.append('core')
@@ -98,10 +99,13 @@ def count_parameters(model):
 
 def fetch_optimizer(config, model):
     """ Create the optimizer and learning rate scheduler """
-    optimizer = optim.AdamW(model.parameters(), lr=config["lr"], weight_decay=config["wdecay"], eps=config["epsilon"])
+    optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
-        pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
+    if config["stage"] == "dsec":
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma=0.1)
+    else:
+        scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
+            pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
 
     return optimizer, scheduler
     
@@ -248,28 +252,28 @@ def train(config):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--name', default='raft', help="name your experiment")
-    parser.add_argument('--stage', help="determines which dataset to use for training") 
-    parser.add_argument('--restore_ckpt', help="restore checkpoint")
-    parser.add_argument('--small', action='store_true', help='use small model')
-    parser.add_argument('--validation', type=str, nargs='+')
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--name', default='raft', help="name your experiment")
+    # parser.add_argument('--stage', help="determines which dataset to use for training") 
+    # parser.add_argument('--restore_ckpt', help="restore checkpoint")
+    # parser.add_argument('--small', action='store_true', help='use small model')
+    # parser.add_argument('--validation', type=str, nargs='+')
 
-    parser.add_argument('--lr', type=float, default=0.00002)
-    parser.add_argument('--num_steps', type=int, default=100000)
-    parser.add_argument('--batch_size', type=int, default=6)
-    parser.add_argument('--image_size', type=int, nargs='+', default=[384, 512])
-    parser.add_argument('--gpus', type=int, nargs='+', default=[0,1])
-    parser.add_argument('--mixed_precision', action='store_true', help='use mixed precision')
+    # parser.add_argument('--lr', type=float, default=0.00002)
+    # parser.add_argument('--num_steps', type=int, default=100000)
+    # parser.add_argument('--batch_size', type=int, default=6)
+    # parser.add_argument('--image_size', type=int, nargs='+', default=[384, 512])
+    # parser.add_argument('--gpus', type=int, nargs='+', default=[0,1])
+    # parser.add_argument('--mixed_precision', action='store_true', help='use mixed precision')
 
-    parser.add_argument('--iters', type=int, default=12)
-    parser.add_argument('--wdecay', type=float, default=.00005)
-    parser.add_argument('--epsilon', type=float, default=1e-8)
-    parser.add_argument('--clip', type=float, default=1.0)
-    parser.add_argument('--dropout', type=float, default=0.0)
-    parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
-    parser.add_argument('--add_noise', action='store_true')
-    args = parser.parse_args()
+    # parser.add_argument('--iters', type=int, default=12)
+    # parser.add_argument('--wdecay', type=float, default=.00005)
+    # parser.add_argument('--epsilon', type=float, default=1e-8)
+    # parser.add_argument('--clip', type=float, default=1.0)
+    # parser.add_argument('--dropout', type=float, default=0.0)
+    # parser.add_argument('--gamma', type=float, default=0.8, help='exponential weighting')
+    # parser.add_argument('--add_noise', action='store_true')
+    # args = parser.parse_args()
 
     config = json.load(open())
 
