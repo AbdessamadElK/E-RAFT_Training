@@ -8,12 +8,6 @@ from torch.utils.data import DataLoader
 from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
 
-"""
-#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
-
-#Fine grained : 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
-"""
-
 # sys.path.append('core')
 
 import json
