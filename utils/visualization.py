@@ -276,10 +276,10 @@ def save_image(filepath, tensor):
 def events_to_event_image(event_sequence, height, width, background=None, rotation_angle=None, crop_window=None,
                           horizontal_flip=False, flip_before_crop=True):
     polarity = event_sequence[:, 3] == -1.0
-    x_negative = event_sequence[~polarity, 1].astype(numpy.int)
-    y_negative = event_sequence[~polarity, 2].astype(numpy.int)
-    x_positive = event_sequence[polarity, 1].astype(numpy.int)
-    y_positive = event_sequence[polarity, 2].astype(numpy.int)
+    x_negative = event_sequence[~polarity, 1].astype(int)
+    y_negative = event_sequence[~polarity, 2].astype(int)
+    x_positive = event_sequence[polarity, 1].astype(int)
+    y_positive = event_sequence[polarity, 2].astype(int)
 
     positive_histogram, _, _ = numpy.histogram2d(
         x_positive,
