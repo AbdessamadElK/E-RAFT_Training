@@ -1,7 +1,7 @@
 {
     "name": "dsec_standard",
     "stage": "dsec",
-    "path":"/home/abdou/DSEC",
+    "path":"C:/users/public/DSEC",
     "cuda": false,
     "gpu": 0,
     "subtype": "standard",
