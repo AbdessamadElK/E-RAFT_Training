@@ -16,13 +16,13 @@ from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
 
 # Data loading
-dsec_path = Path("/home/abdou/DSEC")
+dsec_path = Path("C:/users/public/DSEC")
 provider = DatasetProvider(dsec_path, mode = "train", representation_type=RepresentationType.VOXEL)
 train_loader = DataLoader(provider.get_dataset())
 
 
 # Visualization
-SAVE_PATH = "../DSEC/visualization"
+SAVE_PATH = str(dsec_path / "visualization")
 FILE_TEMPLATE = "sample_{}.png"
 VIDEO_FILE_TEMPLATE = "{}_video.mp4"
 
