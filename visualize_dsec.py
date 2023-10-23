@@ -44,7 +44,7 @@ for idx, name in enumerate(sequence_names):
 
     # writer = skvideo.io.FFmpegWriter(savepath, outputdict = {'-r':str(3)})
     if platform.system() == "Windows":
-        writer = skvideo.io.FFmpegWriter(savepath, outputdict={"-pix_fmt": "yuvj444p"})
+        writer = skvideo.io.FFmpegWriter(savepath, outputdict={"-pix_fmt": "yuv420p"})
     else:
         writer = skvideo.io.FFmpegWriter(savepath)
 
