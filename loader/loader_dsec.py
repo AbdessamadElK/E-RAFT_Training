@@ -17,6 +17,11 @@ import imageio
 
 from utils.dsec_utils import RepresentationType, VoxelGrid, flow_16bit_to_float
 
+# To read HDF5 files on windows
+import platform
+if platform.system() == "Windows":
+    import hdf5plugin
+
 VISU_INDEX = 1
 
 class EventSlicer:
