@@ -1,6 +1,8 @@
 from pathlib import Path
 from torch.utils.data import DataLoader
 
+import platform
+
 import numpy as np
 
 import skimage
@@ -41,7 +43,11 @@ for idx, name in enumerate(sequence_names):
     savepath = savepath / VIDEO_FILE_TEMPLATE.format(name)
 
     # writer = skvideo.io.FFmpegWriter(savepath, outputdict = {'-r':str(3)})
-    writer = skvideo.io.FFmpegWriter(savepath)
+    if platform.system() == "Windows":
+        writer = skvideo.io.FFmpegWriter(savepath, outputdict={"-pix_fmt": "yuvj444p"})
+    else:
+        writer = skvideo.io.FFmpegWriter(savepath)
+
 
     print(f"Sequence {idx+1}: {name}")
 
