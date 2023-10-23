@@ -24,7 +24,6 @@ train_loader = DataLoader(provider.get_dataset())
 
 
 # Visualization
-SAVE_PATH = str(dsec_path / "visualization")
 FILE_TEMPLATE = "sample_{}.png"
 VIDEO_FILE_TEMPLATE = "{}_video.mp4"
 
@@ -35,7 +34,7 @@ for idx, name in enumerate(sequence_names):
     slicer = loader_instance.event_slicer
     
     # Create a video writer instance
-    savepath = Path(SAVE_PATH) / name
+    savepath = dsec_path / "visulaization" / name
 
     if not savepath.is_dir():
             savepath.mkdir(parents = True, exist_ok = True)
@@ -44,9 +43,9 @@ for idx, name in enumerate(sequence_names):
 
     # writer = skvideo.io.FFmpegWriter(savepath, outputdict = {'-r':str(3)})
     if platform.system() == "Windows":
-        writer = skvideo.io.FFmpegWriter(savepath, outputdict={"-pix_fmt": "yuv420p"})
+        writer = skvideo.io.FFmpegWriter(str(savepath), outputdict={"-pix_fmt": "yuv420p"})
     else:
-        writer = skvideo.io.FFmpegWriter(savepath)
+        writer = skvideo.io.FFmpegWriter(str(savepath))
 
 
     print(f"Sequence {idx+1}: {name}")

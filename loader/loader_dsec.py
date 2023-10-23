@@ -464,7 +464,7 @@ class DatasetProvider:
 
         sequences = list()
         for child in path.iterdir():
-            self.name_mapper.append(str(child).split("/")[-1])
+            self.name_mapper.append(child.name)
             if type == 'standard':
                 sequences.append(Sequence(child, representation_type, mode, delta_t_ms, num_bins,
                                                transforms=[],
