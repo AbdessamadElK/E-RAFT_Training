@@ -62,6 +62,11 @@ VAL_FREQ = 5000
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     """ Loss function defined over sequence of flow predictions """
 
+    # Print for debugging
+    print("flow_gt : ", flow_gt.shape)
+    print("valid : ", valid.shape)
+    print("flow_pred : ", flow_preds[0].shape)
+    
     flow_gt = flow_gt.squeeze()
     valid = valid.squeeze()
 
@@ -71,9 +76,6 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     # exlude invalid pixels and extremely large diplacements
     mag = torch.sum(flow_gt**2, dim=2).sqrt()
 
-    # Print for debugging
-    print("flow_gt : ", flow_gt.shape)
-    print("flow_pred : ", flow_preds[0].shape)
 
     valid = (valid >= 0.5) & (mag < max_flow)
 
