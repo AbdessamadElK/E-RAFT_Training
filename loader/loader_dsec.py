@@ -379,8 +379,7 @@ class Sequence(Dataset):
         output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
         
         # Channels first
-        output['flow_gt'] = output['flow_gt'].transpose(0, 3, 1, 2)
-        output['flow_valid'] = output['flow_valid'].transpose(0, 3, 1, 2)
+        output['flow_gt'] = output['flow_gt'].transpose(2, 0, 1)
 
         return output
 
