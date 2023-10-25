@@ -67,8 +67,8 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     print("valid : ", valid.shape)
     print("flow_pred : ", flow_preds[0].shape)
     
-    flow_gt = flow_gt.squeeze()
-    valid = valid.squeeze()
+    # flow_gt = flow_gt.squeeze()
+    # valid = valid.squeeze()
 
     n_predictions = len(flow_preds)    
     flow_loss = 0.0
