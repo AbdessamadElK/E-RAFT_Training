@@ -134,16 +134,12 @@ class ERAFT(nn.Module):
             # F(t+1) = F(t) + \Delta(t)
             coords1 = coords1 + delta_flow
 
-            print("Flow size before upsampling : ", (coords1 - coords0).shape)
-
             # upsample predictions
-            up_mask = None
             if up_mask is None:
                 flow_up = upflow8(coords1 - coords0)
             else:
                 flow_up = self.upsample_flow(coords1 - coords0, up_mask)
 
-            # flow_predictions.append(self.image_padder.unpad(flow_up))
-            flow_predictions.append(flow_up)
+            flow_predictions.append(self.image_padder.unpad(flow_up))
 
         return coords1 - coords0, flow_predictions
