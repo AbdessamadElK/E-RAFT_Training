@@ -91,11 +91,11 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-def fetch_optimizer(config, model):
+def fetch_optimizer(stage, config, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
-    if config["stage"] == "dsec":
+    if stage == "dsec":
         # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma=0.1)
         # Only 5 steps to test if the code is running
         scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config['lr'], 5, pct_start = .05,
@@ -177,7 +177,7 @@ def train(config):
     # TODO: Implement fetch_dataloader function
     #train_loader = datasets.fetch_dataloader(config)
 
-    optimizer, scheduler = fetch_optimizer(train_config, model)
+    optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
