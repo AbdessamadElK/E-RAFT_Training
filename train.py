@@ -73,8 +73,7 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
 
     # Print for debugging
     print("flow_gt : ", flow_gt.shape)
-    print("mag : ", mag.shape)
-    print("valid :", valid.shape)
+    print("flow_pred : ", flow_preds[0].shape)
 
     valid = (valid >= 0.5) & (mag < max_flow)
 
