@@ -156,7 +156,7 @@ class Logger:
 
 def train(config):
     train_config = config["train"]
-    n_first_channels = config["data_loader"]["train"]["num_voxel_bins"] 
+    n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"] 
 
     model = nn.DataParallel(ERAFT(config, n_first_channels), device_ids=config["train"]["gpus"])
     print("Parameter Count: %d" % count_parameters(model))
