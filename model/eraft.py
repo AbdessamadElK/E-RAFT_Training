@@ -136,6 +136,7 @@ class ERAFT(nn.Module):
 
             # upsample predictions
             if up_mask is None:
+                print("flow size before upsampling : ", (coords1 - coords0).shape)
                 flow_up = upflow8(coords1 - coords0)
             else:
                 flow_up = self.upsample_flow(coords1 - coords0, up_mask)
