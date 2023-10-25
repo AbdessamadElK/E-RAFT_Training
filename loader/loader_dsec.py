@@ -377,6 +377,10 @@ class Sequence(Dataset):
         # Also include optical flow ground trugh when training
         flow_path = Path(self.event_file_paths[index])
         output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
+        
+        # Channels first
+        output['flow_gt'] = output['flow_gt'].transpose(2, 0, 1)
+        output['flow_valid'] = output['flow_valid'].transpose(2, 0, 1)
 
         return output
 
