@@ -143,6 +143,7 @@ class ERAFT(nn.Module):
             else:
                 flow_up = self.upsample_flow(coords1 - coords0, up_mask)
 
-            flow_predictions.append(self.image_padder.unpad(flow_up))
+            # flow_predictions.append(self.image_padder.unpad(flow_up))
+            flow_predictions.append(flow_up)
 
         return coords1 - coords0, flow_predictions
