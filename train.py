@@ -62,6 +62,9 @@ VAL_FREQ = 5000
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     """ Loss function defined over sequence of flow predictions """
 
+    flow_gt = flow_gt.squeeze()
+    valid = valid.squeeze()
+
     n_predictions = len(flow_preds)    
     flow_loss = 0.0
 
