@@ -170,7 +170,7 @@ def train(config):
     if config["stage"] != 'chairs':
         model.module.freeze_bn()
 
-    provider = DatasetProvider(config["path"], mode = "train", representation_type=RepresentationType.VOXEL)
+    provider = DatasetProvider(Path(config["path"]), mode = "train", representation_type=RepresentationType.VOXEL)
 
     train_loader = DataLoader(provider.get_dataset())
 
