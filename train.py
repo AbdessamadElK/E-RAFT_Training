@@ -96,7 +96,10 @@ def fetch_optimizer(config, model):
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
     if config["stage"] == "dsec":
-        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma=0.1)
+        # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma=0.1)
+        # Only 5 steps to test if the code is running
+        scheduler = optim.lr_scheduler.OnecycleLr(optimizer, config['lr'], 5, pct_start = .05,
+                                                cycle_momentum=False, anneal_strategy='linear')
     else:
         scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
             pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
