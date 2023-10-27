@@ -215,7 +215,7 @@ def train(config):
             #     image1 = (image1 + stdv * torch.randn(*image1.shape).cuda()).clamp(0.0, 255.0)
             #     image2 = (image2 + stdv * torch.randn(*image2.shape).cuda()).clamp(0.0, 255.0)
 
-            flow_predictions = model(volume1, volume2, iters=train_config["iters"])            
+            _, flow_predictions = model(volume1, volume2, iters=train_config["iters"])            
 
             loss, metrics = sequence_loss(flow_predictions, flow, valid, train_config["gamma"])
             scaler.scale(loss).backward()
