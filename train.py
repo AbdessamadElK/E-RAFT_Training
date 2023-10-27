@@ -70,9 +70,6 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     # exlude invalid pixels and extremely large diplacements
     mag = torch.sum(flow_gt**2, dim=1).sqrt()
 
-    print("mag : ", mag.shape)
-
-
     valid = (valid >= 0.5) & (mag < max_flow)
 
     for i in range(n_predictions):
@@ -190,6 +187,7 @@ def train(config):
 
     should_keep_training = True
     while should_keep_training:
+        print("[Step {} / {}]".format(total_steps, train_config["num_steps"]))
 
         for i_batch, data_blob in tqdm(enumerate(train_loader)):
             optimizer.zero_grad()
@@ -197,8 +195,6 @@ def train(config):
             volume2 = data_blob["event_volume_new"].cuda()
             flow = data_blob["flow_gt"].cuda()
             valid = data_blob["flow_valid"].cuda()
-
-            # Must be tested with cuda
 
             # if config.add_noise:
             #     stdv = np.random.uniform(0.0, 5.0)
