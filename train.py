@@ -28,6 +28,10 @@ import torch.nn.functional as F
 
 from torch.utils.data import DataLoader
 
+import warnings
+from torch.serialization import SourceChangeWarning
+warnings.filterwarnings("ignore", category=SourceChangeWarning)
+
 from model.eraft import ERAFT
 # import evaluate
 # import datasets
@@ -183,11 +187,11 @@ def train(config):
     # logger = Logger(model, scheduler)
 
     VAL_FREQ = 5000
-    add_noise = True
+    add_noise = False
 
     should_keep_training = True
     while should_keep_training:
-        print("[Step {} / {}]".format(total_steps, train_config["num_steps"]))
+        print("[Step {} / {}]".format(total_steps + 1, train_config["num_steps"]))
 
         for i_batch, data_blob in tqdm(enumerate(train_loader)):
             optimizer.zero_grad()
