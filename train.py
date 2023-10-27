@@ -191,9 +191,10 @@ def train(config):
 
     should_keep_training = True
     while should_keep_training:
-        print("[Step {} / {}]".format(total_steps + 1, train_config["num_steps"]))
 
-        for i_batch, data_blob in tqdm(enumerate(train_loader)):
+        description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
+
+        for i_batch, data_blob in tqdm(enumerate(train_loader), desc = description):
             optimizer.zero_grad()
             volume1 = data_blob["event_volume_old"].cuda()
             volume2 = data_blob["event_volume_new"].cuda()
