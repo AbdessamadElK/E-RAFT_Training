@@ -107,14 +107,9 @@ def fetch_optimizer(stage, config, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
-    if stage == "dsec":
-        # scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma=0.1)
-        # Only 5 steps to test if the code is running
-        scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config['lr'], 5, pct_start = .05,
-                                                cycle_momentum=False, anneal_strategy='linear')
-    else:
-        scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
-            pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
+    # Use the same scheduler for all stages for now
+    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
+        pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
 
     return optimizer, scheduler
     
@@ -249,7 +244,7 @@ def train(config):
             
             total_steps += 1
 
-            if total_steps > config["num_steps"]:
+            if total_steps > train_config["num_steps"]:
                 should_keep_training = False
                 break
 
