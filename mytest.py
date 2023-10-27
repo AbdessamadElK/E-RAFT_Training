@@ -2,8 +2,9 @@ from pathlib import Path
 
 import json
 
-from torch.utils.data import DataLoader
+import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
 from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
@@ -23,7 +24,11 @@ loader = DataLoader(provider.get_dataset(), batch_size= 1, shuffle=False)
 
 config = json.load(open("./config/dsec_standard.json"))
 n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
+
 model = ERAFT(config, n_first_channels)
+
+if torch.cuda.is_available():
+    model = nn.DataParallel(model, device_ids=config["train"]["gpus"])
 
 
 for i, batch in enumerate(loader):
