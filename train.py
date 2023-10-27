@@ -12,6 +12,8 @@ from utils.dsec_utils import RepresentationType
 
 import json
 
+from tqdm import tqdm
+
 import argparse
 import os
 import cv2
@@ -61,14 +63,6 @@ VAL_FREQ = 5000
 
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     """ Loss function defined over sequence of flow predictions """
-
-    # Print for debugging
-    print("flow_gt : ", flow_gt.shape)
-    print("valid : ", valid.shape)
-    print("flow_pred : ", flow_preds[0].shape)
-    
-    # flow_gt = flow_gt.squeeze()
-    # valid = valid.squeeze()
 
     n_predictions = len(flow_preds)    
     flow_loss = 0.0
@@ -158,7 +152,8 @@ class Logger:
             self.writer.add_scalar(key, results[key], self.total_steps)
 
     def close(self):
-        self.writer.close()
+        if not self.writer is None:
+            self.writer.close()
 
 
 def train(config):
@@ -188,7 +183,7 @@ def train(config):
 
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
-    logger = Logger(model, scheduler)
+    # logger = Logger(model, scheduler)
 
     VAL_FREQ = 5000
     add_noise = True
@@ -196,7 +191,7 @@ def train(config):
     should_keep_training = True
     while should_keep_training:
 
-        for i_batch, data_blob in enumerate(train_loader):
+        for i_batch, data_blob in tqdm(enumerate(train_loader)):
             optimizer.zero_grad()
             volume1 = data_blob["event_volume_old"].cuda()
             volume2 = data_blob["event_volume_new"].cuda()
@@ -221,7 +216,7 @@ def train(config):
             scheduler.step()
             scaler.update()
 
-            logger.push(metrics)
+            # logger.push(metrics)
 
             if total_steps % VAL_FREQ == VAL_FREQ - 1:
                 PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
@@ -248,7 +243,7 @@ def train(config):
                 should_keep_training = False
                 break
 
-    logger.close()
+    # logger.close()
     PATH = 'checkpoints/%s.pth' % config["name"]
     torch.save(model.state_dict(), PATH)
 
