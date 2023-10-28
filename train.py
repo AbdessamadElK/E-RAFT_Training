@@ -186,7 +186,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter("Training on DSEC")
+    writer = SummaryWriter("../pytorch/logdir")
 
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
