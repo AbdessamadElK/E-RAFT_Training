@@ -261,7 +261,6 @@ def train(config):
                     pred_image[~ data_blob["flow_valid"].squeeze()] = 0
                     writer.add_image("Prediction", pred_image * 255.0, total_steps, dataformats="HWC")
 
-                    writer.flush()
                 
             total_steps += 1
 
