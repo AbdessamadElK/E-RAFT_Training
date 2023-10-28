@@ -384,7 +384,7 @@ def plot_points_on_background(points_coordinates,
     return background_with_points
 
 
-def visualize_optical_flow(flow, savepath=None, return_image=False, text=None, scaling=None):
+def visualize_optical_flow(flow, savepath=None, return_bgr=False, text=None, scaling=None):
     # flow -> numpy array 2 x height x width
     # 2,h,w -> h,w,2
     flow = flow.transpose(1,2,0)
@@ -423,4 +423,6 @@ def visualize_optical_flow(flow, savepath=None, return_image=False, text=None, s
         else: #Plot with skimage
             out = bgr*255
             io.imsave(savepath, out.astype('uint8'))
+    
+    out = bgr if return_bgr else rgb
     return bgr, (mag.min(), mag.max())

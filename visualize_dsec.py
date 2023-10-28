@@ -56,7 +56,7 @@ for idx, name in enumerate(sequence_names):
 
         # Get optical flow image
         flow_gt = sample["flow_gt"]
-        flow_img, _ = visualize_optical_flow(flow_gt)
+        flow_img, _ = visualize_optical_flow(flow_gt, return_bgr=True)
         flow_img = flow_img * 255
 
         # Get events as image
