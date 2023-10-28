@@ -387,7 +387,9 @@ def plot_points_on_background(points_coordinates,
 def visualize_optical_flow(flow, savepath=None, return_image=False, text=None, scaling=None):
     # flow -> numpy array 2 x height x width
     # 2,h,w -> h,w,2
+    print("Before transpose :", flow.shape)
     flow = flow.transpose(1,2,0)
+    print("After transpose :", flow.shape)
     flow[numpy.isinf(flow)]=0
     # Use Hue, Saturation, Value colour model
     hsv = numpy.zeros((flow.shape[0], flow.shape[1], 3), dtype=float)
