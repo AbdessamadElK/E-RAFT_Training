@@ -250,19 +250,19 @@ def train(config):
 
             if total_steps % (VIS_FREQ + 1) == 0:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
+                with torch.no_grad():
+                    print(data_blob["flow_gt"].shape)
+                    print(flow_predictions[-1].shape)
 
-                print(data_blob["flow_gt"].shape)
-                print(flow_predictions[-1].shape)
-
-                # Visualize ground truth
-                gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
-                print(gt_image.shape)
-                writer.add_image("Ground truth", gt_image * 255.0, dataformats="HWC")
+                    # Visualize ground truth
+                    gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
+                    print(gt_image.shape)
+                    writer.add_image("Ground truth", gt_image * 255.0, dataformats="HWC")
 
 
-                # Visualize prediction
-                pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
-                writer.add_image("Prediction", pred_image * 255.0, dataformats="HWC")
+                    # Visualize prediction
+                    pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
+                    writer.add_image("Prediction", pred_image * 255.0, dataformats="HWC")
 
     # logger.close()
     writer.close()
