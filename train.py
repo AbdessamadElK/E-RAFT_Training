@@ -186,7 +186,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter()
+    writer = SummaryWriter("Training on DSEC")
 
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
@@ -199,8 +199,8 @@ def train(config):
 
     for epoch in range(epochs):
         # description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
-        
-        for data_blob in tqdm(train_loader, desc="Epoch [] ".format(epoch+1)):
+
+        for data_blob in tqdm(train_loader, desc="Epoch [{}] ".format(epoch+1)):
             optimizer.zero_grad()
 
             # Network inputs (event volumes)
@@ -253,12 +253,12 @@ def train(config):
                 with torch.no_grad():
                     # Visualize ground truth
                     gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
-                    writer.add_image("Ground truth", gt_image * 255.0, dataformats="HWC")
+                    writer.add_image("Ground truth", gt_image * 255.0, total_steps, dataformats="HWC")
 
 
                     # Visualize prediction
                     pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
-                    writer.add_image("Prediction", pred_image * 255.0, dataformats="HWC")
+                    writer.add_image("Prediction", pred_image * 255.0, total_steps, dataformats="HWC")
 
     # logger.close()
     writer.close()
