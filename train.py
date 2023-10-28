@@ -252,10 +252,10 @@ def train(config):
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
 
                 # Visualize ground truth
-                gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze())
+                gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
                 writer.add_image("Ground truth", gt_image * 255)
                 # Visualize prediction
-                pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze())
+                pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().numpy())
                 writer.add_image("Prediction", pred_image * 255)
 
     # logger.close()
