@@ -259,6 +259,8 @@ def train(config):
                     # Visualize prediction
                     pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
                     writer.add_image("Prediction", pred_image * 255.0, total_steps, dataformats="HWC")
+                
+            total_steps += 1
 
     # logger.close()
     writer.close()
