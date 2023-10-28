@@ -53,6 +53,8 @@ except:
         def update(self):
             pass
 
+from utils.visualization import events_to_event_image, visualize_optical_flow
+
 # Global constants
 CONFIG_PATH = "./dsec_standard.json"
 DSEC_PATH = Path("/home/abdou/DSEC")
@@ -62,6 +64,9 @@ DSEC_PATH = Path("/home/abdou/DSEC")
 MAX_FLOW = 400
 SUM_FREQ = 100
 VAL_FREQ = 5000
+
+# Visualization
+VIS_FREQ = 10
 
 
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
@@ -181,6 +186,8 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
+    writer = SummaryWriter()
+
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
     # logger = Logger(model, scheduler)
@@ -241,7 +248,19 @@ def train(config):
                 if config["stage"] != 'chairs':
                     model.module.freeze_bn()
 
+            if total_steps % (VIS_FREQ + 1) == 0:
+                # TODO : Visualize events (we only have event volumes but we don't have raw events)
+                
+                # Visualize ground truth
+                gt_image, _ = visualize_optical_flow(flow)
+                writer.add_image("Ground truth", gt_image * 255)
+
+                # Visualize prediction
+                pred_image, _ = visualize_optical_flow(flow_predictions[-1])
+                writer.add_image("Prediction", pred_image * 255)
+
     # logger.close()
+    writer.close()
     PATH = 'checkpoints/%s.pth' % config["name"]
     torch.save(model.state_dict(), PATH)
 
