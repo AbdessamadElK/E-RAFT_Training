@@ -1,0 +1,41 @@
+{
+    "name": "dsec_standard",
+    "stage": "dsec",
+    "path":"C:/users/public/DSEC",
+    "cuda": false,
+    "gpu": 0,
+    "subtype": "standard",
+    "save_dir": "saved",
+    "data_loader": {
+        "test": {
+            "args": {
+                "batch_size": 1,
+                "shuffle": false,
+                "num_voxel_bins": 15
+            }
+        },
+        "train": {
+            "args": {
+                "batch_size": 1,
+                "shuffle": false,
+                "num_voxel_bins": 15
+            }
+        }
+    },
+    "test": {
+        "checkpoint": "checkpoints/dsec.tar"
+    },
+    "train": {
+        "gpus": [0],
+        "lr": 0.0001,
+        "batch_size": 1,
+        "restore_ckpt": null,
+        "wdecay": 0.00005,
+        "epsilon": 1e-8,
+        "num_steps": 1000,
+        "iters": 12,
+        "mixed_precision": false,
+        "gamma": 0.8,
+        "clip": 1.0
+    }
+}
