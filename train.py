@@ -253,10 +253,10 @@ def train(config):
                 print(flow.shape)
                 print(valid.shape)
                 # Visualize ground truth
-                gt_image, _ = visualize_optical_flow(torch.stack([x.squeeze() for x in [flow, valid]]))
+                gt_image, _ = visualize_optical_flow(torch.stack([flow.squeeze(), valid]))
                 writer.add_image("Ground truth", gt_image * 255)
                 # Visualize prediction
-                pred_image, _ = visualize_optical_flow(torch.stack([x.squeeze() for x in [flow_predictions[-1], valid]]))
+                pred_image, _ = visualize_optical_flow(torch.stack([flow_predictions[-1].squeeze(), valid]))
                 writer.add_image("Prediction", pred_image * 255)
 
     # logger.close()
