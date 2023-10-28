@@ -248,7 +248,7 @@ def train(config):
                 if config["stage"] != 'chairs':
                     model.module.freeze_bn()
 
-            if total_steps % (VIS_FREQ + 1) == 0:
+            if (total_steps % VIS_FREQ ) == 0:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
                 with torch.no_grad():
                     # Visualize ground truth
