@@ -257,12 +257,12 @@ def train(config):
                 # Visualize ground truth
                 gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
                 print(gt_image.shape)
-                writer.add_image("Ground truth", gt_image * 255.0)
+                writer.add_image("Ground truth", gt_image * 255.0, dataformats="HWC")
 
 
                 # Visualize prediction
                 pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().numpy())
-                writer.add_image("Prediction", pred_image * 255.0)
+                writer.add_image("Prediction", pred_image * 255.0, dataformats="HWC")
 
     # logger.close()
     writer.close()
