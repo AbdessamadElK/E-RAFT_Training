@@ -29,8 +29,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 import warnings
-from torch.serialization import SourceChangeWarning
-warnings.filterwarnings("ignore", category=SourceChangeWarning)
+warnings.filterwarnings("ignore")
 
 from model.eraft import ERAFT
 # import evaluate
@@ -189,15 +188,21 @@ def train(config):
     VAL_FREQ = 5000
     add_noise = False
 
-    should_keep_training = True
-    while should_keep_training:
+    epochs = train_config["epochs"]
 
-        description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
+    for epoch in range(epochs):
+        print("Epoch [{}]".format(epoch+1))
 
-        for i_batch, data_blob in tqdm(enumerate(train_loader), desc = description):
+        # description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
+
+        for data_blob in tqdm(train_loader):
             optimizer.zero_grad()
+
+            # Network inputs (event volumes)
             volume1 = data_blob["event_volume_old"].cuda()
             volume2 = data_blob["event_volume_new"].cuda()
+
+            # Labels (optical flow)
             flow = data_blob["flow_gt"].cuda()
             valid = data_blob["flow_valid"].cuda()
 
@@ -237,12 +242,6 @@ def train(config):
                 model.train()
                 if config["stage"] != 'chairs':
                     model.module.freeze_bn()
-            
-            total_steps += 1
-
-            if total_steps > train_config["num_steps"]:
-                should_keep_training = False
-                break
 
     # logger.close()
     PATH = 'checkpoints/%s.pth' % config["name"]
