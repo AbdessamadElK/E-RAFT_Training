@@ -199,8 +199,8 @@ def train(config):
 
     for epoch in range(epochs):
         # description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
-
-        for data_blob in tqdm(train_loader, desc="\nEpoch [] ".format(epoch+1)):
+        
+        for data_blob in tqdm(train_loader, desc="Epoch [] ".format(epoch+1)):
             optimizer.zero_grad()
 
             # Network inputs (event volumes)
