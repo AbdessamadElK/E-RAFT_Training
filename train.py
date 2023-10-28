@@ -251,6 +251,9 @@ def train(config):
             if total_steps % (VIS_FREQ + 1) == 0:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
 
+                print(data_blob["flow_gt"].shape())
+                print(flow_predictions[-1].shape)
+
                 # Visualize ground truth
                 gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
                 writer.add_image("Ground truth", gt_image * 255)
