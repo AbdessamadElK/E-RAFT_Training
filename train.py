@@ -250,13 +250,12 @@ def train(config):
 
             if total_steps % (VIS_FREQ + 1) == 0:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
-                print(flow.shape)
-                print(valid.shape)
+
                 # Visualize ground truth
-                gt_image, _ = visualize_optical_flow(torch.stack([flow.squeeze(), valid]))
+                gt_image, _ = visualize_optical_flow(data_blob["flow_gt"])
                 writer.add_image("Ground truth", gt_image * 255)
                 # Visualize prediction
-                pred_image, _ = visualize_optical_flow(torch.stack([flow_predictions[-1].squeeze(), valid]))
+                pred_image, _ = visualize_optical_flow(flow_predictions[-1])
                 writer.add_image("Prediction", pred_image * 255)
 
     # logger.close()

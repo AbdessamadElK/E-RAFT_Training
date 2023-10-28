@@ -15,6 +15,25 @@ import skvideo.io
 
 from tqdm import tqdm
 
+import numpy as np
+
+A = np.random.randint(0, 11, (2, 4, 4))
+B = np.random.randint(0, 11, (1, 4, 4))
+
+A = torch.from_numpy(A)
+B = torch.from_numpy(B)
+
+print(A)
+print()
+print(B)
+print()
+
+C = torch.vstack([A, B])
+print(C)
+
+
+
+quit()
 
 dsec_path = Path("C:/users/public/dsec")
 
