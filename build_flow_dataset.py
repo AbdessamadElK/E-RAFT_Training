@@ -108,6 +108,8 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
         for sequence_dir in tqdm(data_dir.iterdir(), desc=description):
             if not sequence_dir.name in flow_sequences or sequence_dir.is_file():
                 continue
+            
+            overwrite = False
 
             for sub_dir in sequence_dir.iterdir():
                 if sub_dir.is_file():
@@ -116,6 +118,17 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
                 for item in sub_dir.iterdir():
                     name = "_".join([sub_dir.name, item.name])
                     destination = out_path / sequence_dir.name / name
+
+                    if (destination.is_dir() or destination.is_file()) and not overwrite:
+                        confirmation = input(str(data_dir) + " already exists, would you like to overwrite it? [y/N/a]")
+                        if confirmation.lower() in ["y", "yes"]:
+                            print("Warning :", destination.name, "will be overwriten. Conflicts might result from this.")
+                        elif confirmation.lower() in ["a", "all"]:
+                            overwrite = True
+                            print("Warning :", destination.name, "will be overwriten as well as every file and folder in this data directory. Conflicts might result from this.")
+                        else:
+                            print("Ignoring", destination.name)
+                            continue
 
                     copy_item(item, destination)                  
 
