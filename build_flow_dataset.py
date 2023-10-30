@@ -94,14 +94,7 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
         flow_sequences = [x.name for x in out_path.iterdir()]
     
     for data_dir in in_path.iterdir():
-        if data_dir.is_dir():
-            confirmation = input(data_dir + " already exists, would you like to overwrite it? [y/N]")
-            if confirmation.lower() in ["y", "yes"]:
-                print("Warning :", data_dir.name, "will be overwriteen. Conflicts might result from this.")
-            else:
-                print("Ignoring", data_dir.name)
-                continue
-
+        
         oper = "Copying" if policy == "copy" else "Moving"
         description = oper + " " + data_dir.name
 
