@@ -81,19 +81,27 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
     policy = policy.lower()
     assert policy in ["move", "copy"]
 
+    out_path = out_path / "train"
+
     if not out_path.is_dir():
         out_path.mkdir(parents = True, exist_ok = True)
 
-    out_path = out_path / "train"
-    out_path.mkdir(parents=True, exist_ok=True)
-
     flow_dir = in_path / "train_optical_flow"
-    assert flow_dir.is_dir()
-
-    flow_sequences = [x.name for x in flow_dir.iterdir()]
+    
+    if flow_dir.is_dir():
+        flow_sequences = [x.name for x in flow_dir.iterdir()]
+    else:
+        flow_sequences = [x.name for x in out_path.iterdir()]
     
     for data_dir in in_path.iterdir():
-        
+        if data_dir.is_dir():
+            confirmation = input(data_dir + " already exists, would you like to overwrite it? [y/N]")
+            if confirmation.lower() in ["y", "yes"]:
+                print("Warning :", data_dir.name, "will be overwriteen. Conflicts might result from this.")
+            else:
+                print("Ignoring", data_dir.name)
+                continue
+
         oper = "Copying" if policy == "copy" else "Moving"
         description = oper + " " + data_dir.name
 
