@@ -206,7 +206,7 @@ class Sequence(Dataset):
         if self.mode == "test":
             timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
         elif self.mode == "train":
-            timestamp_file = seq_path / 'optical_flow_forward_timestamps.txt'
+            timestamp_file = seq_path / 'flow_forward_timestamps.txt'
         
         assert timestamp_file.is_file()
         file = np.genfromtxt(
@@ -259,10 +259,10 @@ class Sequence(Dataset):
 
         self._finalizer = weakref.finalize(self, self.close_callback, self.h5f)
 
-        # Localize event files
-        events_dir = Path(seq_path / 'optical_flow_forward_event')
-        assert events_dir.is_dir()
-        self.event_file_paths = sorted(events_dir.iterdir())
+        # Localize flow files
+        flow_dir = Path(seq_path / 'flow_forward')
+        assert flow_dir.is_dir()
+        self.flow_file_paths = sorted(flow_dir.iterdir())
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
@@ -375,7 +375,7 @@ class Sequence(Dataset):
             output['name_map']=self.name_idx
 
         # Also include optical flow ground trugh when training
-        flow_path = Path(self.event_file_paths[index])
+        flow_path = Path(self.flow_file_paths[index])
         output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
         
         # Channels first

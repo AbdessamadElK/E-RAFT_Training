@@ -18,7 +18,7 @@ from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
 
 # Data loading
-dsec_path = Path("C:/users/public/DSEC")
+dsec_path = Path("C:/users/public/DSEC_flow")
 provider = DatasetProvider(dsec_path, mode = "train", representation_type=RepresentationType.VOXEL)
 train_loader = DataLoader(provider.get_dataset())
 
