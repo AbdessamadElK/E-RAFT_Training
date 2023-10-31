@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 import sys
+from datetime import datetime
 
 from pathlib import Path
 
@@ -66,7 +67,7 @@ SUM_FREQ = 100
 VAL_FREQ = 5000
 
 # Visualization
-VIS_FREQ = 10
+VIS_FREQ = 50
 
 
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
@@ -106,9 +107,12 @@ def fetch_optimizer(stage, config, model):
     """ Create the optimizer and learning rate scheduler """
     optimizer = optim.Adam(model.parameters(), lr=config["lr"])
 
-    # Use the same scheduler for all stages for now
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
-        pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
+    if stage.lower() == "dsec":
+        # Decrease the learning rate by a factor of 10 after 30 epochs
+        scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30], gamma = 0.1)
+    else:
+        scheduler = optim.lr_scheduler.OneCycleLR(optimizer, config["lr"], config["num_steps"]+100,
+            pct_start=0.05, cycle_momentum=False, anneal_strategy='linear')
 
     return optimizer, scheduler
     
@@ -119,7 +123,7 @@ class Logger:
         self.scheduler = scheduler
         self.total_steps = 0
         self.running_loss = {}
-        self.writer = None
+        self.writer = SummaryWriter(f"C:/users/public/runs/run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
 
     def _print_training_status(self):
         metrics_data = [self.running_loss[k]/SUM_FREQ for k in sorted(self.running_loss.keys())]
@@ -128,9 +132,6 @@ class Logger:
         
         # print the training status
         print(training_str + metrics_str)
-
-        if self.writer is None:
-            self.writer = SummaryWriter()
 
         for k in self.running_loss:
             self.writer.add_scalar(k, self.running_loss[k]/SUM_FREQ, self.total_steps)
@@ -150,8 +151,6 @@ class Logger:
             self.running_loss = {}
 
     def write_dict(self, results):
-        if self.writer is None:
-            self.writer = SummaryWriter()
 
         for key in results:
             self.writer.add_scalar(key, results[key], self.total_steps)
@@ -186,7 +185,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter("../pytorch/logdir")
+    writer = SummaryWriter(f"C:/users/public/runs/run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
 
     total_steps = 0
     scaler = GradScaler(enabled=train_config["mixed_precision"])
@@ -248,20 +247,22 @@ def train(config):
                 if config["stage"] != 'chairs':
                     model.module.freeze_bn()
 
-            if (total_steps % VIS_FREQ ) == 0:
+            if total_steps % VIS_FREQ  == VIS_FREQ - 1:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
                 with torch.no_grad():
                     # Visualize ground truth
                     gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
                     writer.add_image("Ground truth", gt_image, total_steps, dataformats="HWC")
 
-
                     # Visualize prediction
                     pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
                     pred_image[~ data_blob["flow_valid"].squeeze()] = 0
                     writer.add_image("Prediction", pred_image, total_steps, dataformats="HWC")
 
-                
+                    # Also add metrics
+                    for key, value in metrics.items():
+                        writer.add_scalar(key, value, total_steps)
+
             total_steps += 1
 
     # logger.close()

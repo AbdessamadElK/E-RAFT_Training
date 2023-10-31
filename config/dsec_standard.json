@@ -1,7 +1,7 @@
 {
     "name": "dsec_standard",
     "stage": "dsec",
-    "path":"C:/users/public/DSEC",
+    "path":"C:/users/public/DSEC_flow",
     "cuda": false,
     "gpu": 0,
     "subtype": "standard",
@@ -28,10 +28,10 @@
     "train": {
         "gpus": [0],
         "lr": 0.0001,
-        "epochs": 1,
+        "epochs": 100,
         "batch_size": 1,
         "restore_ckpt": null,
-        "wdecay": 0.00005,
+        "wdecay": 0.00004,
         "epsilon": 1e-8,
         "num_steps": 1000,
         "iters": 12,
