@@ -294,7 +294,7 @@ class Sequence(Dataset):
         # Localize image files
         images_dir = Path(seq_path / 'images_left')
         assert images_dir.is_dir()
-        self.images_file_paths = sorted(images_dir.iterdir())[image_indices]
+        self.images_file_paths = np.take(sorted(images_dir.iterdir()), image_indices)
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
