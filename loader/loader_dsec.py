@@ -178,44 +178,75 @@ class EventSlicer:
 
 
 class Sequence(Dataset):
-    def __init__(self, seq_path: Path, representation_type: RepresentationType, mode: str='test', delta_t_ms: int=100,
-                 num_bins: int=15, transforms=None, name_idx=0, visualize=False):
+    def __init__(self, seq_path: Path, representation_type: RepresentationType, mode: str='test', delta_t_ms: 'int|None' = None,
+                 num_bins: int=15, transforms=None, name_idx=0, visualize=False, load_imgs = False, load_raw_events = False):
         assert num_bins >= 1
-        assert delta_t_ms == 100
         assert seq_path.is_dir()
         assert mode in {'train', 'test'}
+        if mode == "test" and delta_t_ms is None:
+            delta_t_ms = 100
+        
+        # For now only test with delta_t_ms = 100 ms
+        if mode == "test" : assert delta_t_ms == 100
+
+        # Save delta timestamp in micro-seconds
+        if delta_t_ms is not None:
+            self.delta_t_us = delta_t_ms * 1000
+
         '''
-        Directory Structure:
+        Test directory Structure:
 
         Dataset
         └── test
-            ├── interlaken_00_b
-            │   ├── events_left
-            │   │   ├── events.h5
-            │   │   └── rectify_map.h5
-            │   ├── image_timestamps.txt
-            │   └── test_forward_flow_timestamps.csv
-
+        │   ├── interlaken_00_b
+        │   │   ├── events_left
+        │   │   │   ├── events.h5
+        │   │   │   └── rectify_map.h5
+        │   │   ├── image_timestamps.txt
+        │   │   └── test_forward_flow_timestamps.csv
+        │   ...
+        └── train
+        │   ├── zurich_city_01_a
+        │   │   ├── events_left
+        │   │   │   ├── events.h5
+        │   │   │   └── rectify_map.h5
+        │   │   ├── events_right
+        │   │   ├── flow_forward
+        │   │   ├── flow_backward
+        │   │   ├── images_left
+        │   │   ├── images_right
+        │   │   ├── flow_forward_timestamps.txt
+        │   │   ├── flow_backward_timestamps.txt
+        │   │   └── images_timestamps.txt
+        ... ...
         '''
 
         self.mode = mode
         self.name_idx = name_idx
         self.visualize_samples = visualize
+        self.load_imgs = load_imgs
+        self.load_raw_events = load_raw_events
 
-        # Get Test Timestamp File
+        # Get timestamps files
+        images_timestamp_path = seq_path / 'images_timestamps.txt'
+
         if self.mode == "test":
-            timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
+            flow_timestamp_path = seq_path / 'test_forward_flow_timestamps.csv'
         elif self.mode == "train":
-            timestamp_file = seq_path / 'flow_forward_timestamps.txt'
+            flow_timestamp_path = seq_path / 'flow_forward_timestamps.txt'
         
-        assert timestamp_file.is_file()
-        file = np.genfromtxt(
-            timestamp_file,
+        assert flow_timestamp_path.is_file()
+        assert images_timestamp_path.is_file()
+        
+        flow_timestamps = np.genfromtxt(
+            flow_timestamp_path,
             delimiter=','
         )
 
         if self.mode == "test":
-            self.idx_to_visualize = file[:,2]
+            self.idx_to_visualize = flow_timestamps[:,2]
+
+        self.timestamps_images = np.loadtxt(images_timestamp_path, dtype="int64")
 
         # Save output dimensions
         self.height = 480
@@ -230,21 +261,17 @@ class Sequence(Dataset):
         if representation_type == RepresentationType.VOXEL:
             self.voxel_grid = VoxelGrid((self.num_bins, self.height, self.width), normalize=True)
 
-
-        # Save delta timestamp in ms
-        self.delta_t_us = delta_t_ms * 1000
-
         #Load and compute timestamps and indices
         if self.mode == "test":
-            timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
-            image_indices = np.arange(len(timestamps_images))
+            # timestamps_images = np.loadtxt(seq_path / 'image_timestamps.txt', dtype='int64')
+            image_indices = np.arange(len(self.timestamps_images))
             # But only use every second one because we train at 10 Hz, and we leave away the 1st & last one
-            self.timestamps_flow = timestamps_images[::2][1:-1]
+            self.timestamps_flow = self.timestamps_images[::2][1:-1]
             self.indices = image_indices[::2][1:-1]
 
         elif self.mode == "train":
-            self.timestamps_flow = file
-            pass
+            self.timestamps_flow = flow_timestamps
+            image_indices = [item[0] for item in enumerate(self.timestamps_images) if item[1] in self.timestamps_flow[:,0]]
 
         # Left events only
         ev_dir_location = seq_path / 'events_left'
@@ -263,6 +290,11 @@ class Sequence(Dataset):
         flow_dir = Path(seq_path / 'flow_forward')
         assert flow_dir.is_dir()
         self.flow_file_paths = sorted(flow_dir.iterdir())
+
+        # Localize image files
+        images_dir = Path(seq_path / 'images_left')
+        assert images_dir.is_dir()
+        self.images_file_paths = sorted(images_dir.iterdir())[image_indices]
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
