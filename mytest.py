@@ -18,25 +18,14 @@ import skvideo.io
 
 import numpy as np
 
-
-
-
-
 dsec_path = Path("C:/users/public/dsec_flow")
 
 seq_path = dsec_path / "train" / "zurich_city_01_a"
 
 seq = Sequence(seq_path, RepresentationType.VOXEL, mode = "train")
 
-
-indexed_img_timestamps = enumerate(seq.timestamps_images)
-
-flow_start = seq.timestamps_flow[:,0]
-
-
-images_indices = [item[0] for item in indexed_img_timestamps if item[1] in flow_start]
-
-print(len(images_indices))
+for path in seq.images_file_paths:
+    print(path)
 
 quit()
 
