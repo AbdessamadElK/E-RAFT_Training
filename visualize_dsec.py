@@ -78,6 +78,7 @@ for idx, name in enumerate(sequence_names):
 
         # Get image data
         image = sample["image"]
+        image = image.resize((height, width))
 
         image_bottom_row = np.hstack([image, flow_img])
 
