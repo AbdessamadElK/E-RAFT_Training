@@ -87,8 +87,8 @@ for idx, name in enumerate(sequence_names):
         # skimage.io.imsave(savepath, sample_img.astype('uint8'))
         writer.writeFrame(sample_img.astype('uint8'))
 
-    if idx >= 3:
-        # Only visualize four sequences for now
+    if idx >= 2:
+        # Only visualize three sequences for now
         break
 
 writer.close()
