@@ -9,5 +9,3 @@ utils/login_credentials.json
 build/
 checkpoints/*.tar
 !config/examples
-
-./mytest.py
