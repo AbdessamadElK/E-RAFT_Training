@@ -424,7 +424,7 @@ class Sequence(Dataset):
         # Include image data (only the first image at t0)
         if self.load_img:
             first_image = imageio.imread(self.images_file_paths[index], format="PNG-FI")
-            output['image'] = first_image
+            output['image'] = first_image.resize(self.get_image_width_height())
 
 
         return output
