@@ -10,4 +10,4 @@ build/
 checkpoints/*.tar
 !config/examples
 
-mytest.py
+./mytest.py
