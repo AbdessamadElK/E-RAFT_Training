@@ -63,8 +63,8 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
         DSEC_flow
         |- train
             |- zurich_city_01_a
-                |- optical_flow_forward
-                |- optical_flow backward
+                |- flow_forward
+                |- flow_backward
                 |- events_left
                 |- events_right
                 |- images_left

@@ -294,7 +294,8 @@ class Sequence(Dataset):
         # Localize image files
         images_dir = Path(seq_path / 'images_left' / 'rectified')
         assert images_dir.is_dir()
-        self.images_file_paths = np.take(sorted(images_dir.iterdir()), image_indices)
+        image_file_names = [Path(uri).name for uri in self.flow_file_paths]
+        self.images_file_paths = [str(images_dir / name) for name in image_file_names]
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
@@ -349,7 +350,9 @@ class Sequence(Dataset):
     def get_data_sample(self, index, crop_window=None, flip=None):
         # First entry corresponds to all events BEFORE the flow map
         # Second entry corresponds to all events AFTER the flow map (corresponding to the actual fwd flow)
-        names = ['event_volume_old', 'event_volume_new']
+        volume_names = ['event_volume_old', 'event_volume_new']
+        events_names = ['events_raw_old', 'events_raw_new']
+        images_names = ['first_image', 'second_image']
         output = dict()
 
         assert index < len(self.timestamps_flow)
@@ -377,7 +380,7 @@ class Sequence(Dataset):
             output['timestamp'] = self.timestamps_flow[index]
 
 
-        for i in range(len(names)):
+        for i in range(len(volume_names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
 
             p = event_data['p']
@@ -399,11 +402,21 @@ class Sequence(Dataset):
                 x_rect = x_rect[mask_combined]
                 y_rect = y_rect[mask_combined]
 
+            if self.load_raw_events:
+                p = p * 2.0 - 1.0
+                event_sequence = np.vstack([t, x_rect, y_rect, p]).transpose()
+                output[events_names[i]] = event_sequence
+
             if self.voxel_grid is None:
                 raise NotImplementedError
             else:
                 event_representation = self.events_to_voxel_grid(p, t, x_rect, y_rect)
-                output[names[i]] = event_representation
+                output[volume_names[i]] = event_representation
+
+            if self.load_imgs:
+                
+                pass
+
             output['name_map']=self.name_idx
 
         # Also include optical flow ground trugh when training
