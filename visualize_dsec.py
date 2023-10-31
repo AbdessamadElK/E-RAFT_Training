@@ -79,7 +79,7 @@ for idx, name in enumerate(sequence_names):
         # Get image data
         image = sample["image"]
 
-        image_bottom_row = np.hstack(image, flow_img)
+        image_bottom_row = np.hstack([image, flow_img])
 
         sample_img = np.vstack([image_top_row, image_bottom_row])
 
