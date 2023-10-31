@@ -19,7 +19,12 @@ from utils.dsec_utils import RepresentationType
 
 # Data loading
 dsec_path = Path("C:/users/public/DSEC_flow")
-provider = DatasetProvider(dsec_path, mode = "train", representation_type=RepresentationType.VOXEL)
+
+provider = DatasetProvider(dsec_path, mode = "train",
+                           representation_type=RepresentationType.VOXEL,
+                           load_raw_events=True,
+                           load_img=True)
+
 train_loader = DataLoader(provider.get_dataset())
 
 
@@ -54,30 +59,36 @@ for idx, name in enumerate(sequence_names):
     for sample in tqdm(iter(loader_instance)):
         ts_start, ts_end = sample["timestamp"].squeeze()
 
-        # Get optical flow image
+        # Get events as image
+        height, width = loader_instance.getHeightAndWidth()
+        
+        event_images = []
+        for key in ["raw_events_old", "raw_events_new"]:
+            event_sequence = sample[key]
+            event_img = events_to_event_image(event_sequence, height, width)
+            event_img = event_img.numpy().transpose(1, 2, 0)
+            event_images.append(event_img)
+
+        image_top_row = np.hstack(event_images)
+
+        # Get optical flow as image
         flow_gt = sample["flow_gt"]
         flow_img, _ = visualize_optical_flow(flow_gt, return_bgr=True)
         flow_img = flow_img * 255
 
-        # Get events as image
-        slicer = loader_instance.event_slicer
-        height, width = loader_instance.getHeightAndWidth()
-        events = slicer.get_events(ts_start, ts_end)
-        t = events["t"]
-        x = events["x"]
-        y = events["y"]
-        p = events["p"]
+        # Get image data
+        image = sample["image"]
 
-        p = p * 2.0 - 1.0
-        
-        event_sequence = np.vstack([t, x, y, p]).transpose()
-        event_img = events_to_event_image(event_sequence, height, width)
-        event_img = event_img.numpy().transpose(1, 2, 0)
+        image_bottom_row = np.hstack(image, flow_img)
 
-        sample_img = np.hstack([flow_img, event_img])
+        sample_img = np.vstack([image_top_row, image_bottom_row])
 
         # print(f"Writing {savepath}")
         # skimage.io.imsave(savepath, sample_img.astype('uint8'))
         writer.writeFrame(sample_img.astype('uint8'))
+
+    if idx >= 3:
+        # Only visualize three sequences for now
+        break
 
 writer.close()

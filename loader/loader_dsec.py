@@ -179,7 +179,7 @@ class EventSlicer:
 
 class Sequence(Dataset):
     def __init__(self, seq_path: Path, representation_type: RepresentationType, mode: str='test', delta_t_ms: 'int|None' = None,
-                 num_bins: int=15, transforms=None, name_idx=0, visualize=False, load_imgs = False, load_raw_events = False):
+                 num_bins: int=15, transforms=None, name_idx=0, visualize=False, load_img = False, load_raw_events = False):
         assert num_bins >= 1
         assert seq_path.is_dir()
         assert mode in {'train', 'test'}
@@ -224,7 +224,7 @@ class Sequence(Dataset):
         self.mode = mode
         self.name_idx = name_idx
         self.visualize_samples = visualize
-        self.load_imgs = load_imgs
+        self.load_img = load_img
         self.load_raw_events = load_raw_events
 
         # Get timestamps files
@@ -351,8 +351,8 @@ class Sequence(Dataset):
         # First entry corresponds to all events BEFORE the flow map
         # Second entry corresponds to all events AFTER the flow map (corresponding to the actual fwd flow)
         volume_names = ['event_volume_old', 'event_volume_new']
-        events_names = ['events_raw_old', 'events_raw_new']
-        images_names = ['first_image', 'second_image']
+        events_names = ['raw_events_old', 'raw_events_new']
+        # images_names = ['first_image', 'second_image']
         output = dict()
 
         assert index < len(self.timestamps_flow)
@@ -413,18 +413,19 @@ class Sequence(Dataset):
                 event_representation = self.events_to_voxel_grid(p, t, x_rect, y_rect)
                 output[volume_names[i]] = event_representation
 
-            if self.load_imgs:
-                
-                pass
-
             output['name_map']=self.name_idx
 
-        # Also include optical flow ground trugh when training
+        # Also include optical flow ground truth
         flow_path = Path(self.flow_file_paths[index])
         output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
-        
         # Channels first
         output['flow_gt'] = output['flow_gt'].transpose(2, 0, 1)
+
+        # Include image data (only the first image at t0)
+        if self.load_img:
+            first_image = imageio.imread(self.images_file_paths[index], format="PNG-FI")
+            output['image'] = first_image
+
 
         return output
 
@@ -502,7 +503,7 @@ class SequenceRecurrent(Sequence):
 
 class DatasetProvider:
     def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
-                 mode = 'test', type='standard', config=None, visualize=False):
+                 mode = 'test', type='standard', load_raw_events = False, load_img = False, config=None, visualize=False):
         path = dataset_path / mode
         assert dataset_path.is_dir(), str(dataset_path)
         assert path.is_dir(), str(path)
@@ -517,7 +518,9 @@ class DatasetProvider:
                 sequences.append(Sequence(child, representation_type, mode, delta_t_ms, num_bins,
                                                transforms=[],
                                                name_idx=len(self.name_mapper)-1,
-                                               visualize=visualize))
+                                               visualize=visualize,
+                                               load_raw_events=load_raw_events,
+                                               load_img=load_img))
             elif type == 'warm_start':
                 sequences.append(SequenceRecurrent(child, representation_type, mode, delta_t_ms, num_bins,
                                                         transforms=[], sequence_length=1,
