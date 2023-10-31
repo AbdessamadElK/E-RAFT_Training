@@ -292,7 +292,7 @@ class Sequence(Dataset):
         self.flow_file_paths = sorted(flow_dir.iterdir())
 
         # Localize image files
-        images_dir = Path(seq_path / 'images_left')
+        images_dir = Path(seq_path / 'images_left' / 'rectified')
         assert images_dir.is_dir()
         self.images_file_paths = np.take(sorted(images_dir.iterdir()), image_indices)
 
