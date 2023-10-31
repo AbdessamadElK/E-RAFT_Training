@@ -405,7 +405,7 @@ class Sequence(Dataset):
             if self.load_raw_events:
                 # Load raw events for visualization
                 p = p * 2.0 - 1.0
-                event_sequence = np.vstack([t, x, y, pr]).transpose()
+                event_sequence = np.vstack([t, x, y, p]).transpose()
                 output[events_names[i]] = event_sequence
 
             if self.voxel_grid is None:
