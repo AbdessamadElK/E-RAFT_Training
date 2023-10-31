@@ -388,6 +388,12 @@ class Sequence(Dataset):
             x = event_data['x']
             y = event_data['y']
 
+            if self.load_raw_events:
+                # Load raw events for visualization
+                pr = p * 2.0 - 1.0
+                event_sequence = np.vstack([t, x_rect, y_rect, pr]).transpose()
+                output[events_names[i]] = event_sequence
+
             xy_rect = self.rectify_events(x, y)
             x_rect = xy_rect[:, 0]
             y_rect = xy_rect[:, 1]
@@ -402,10 +408,6 @@ class Sequence(Dataset):
                 x_rect = x_rect[mask_combined]
                 y_rect = y_rect[mask_combined]
 
-            if self.load_raw_events:
-                p = p * 2.0 - 1.0
-                event_sequence = np.vstack([t, x_rect, y_rect, p]).transpose()
-                output[events_names[i]] = event_sequence
 
             if self.voxel_grid is None:
                 raise NotImplementedError

@@ -88,7 +88,7 @@ for idx, name in enumerate(sequence_names):
         writer.writeFrame(sample_img.astype('uint8'))
 
     if idx >= 3:
-        # Only visualize three sequences for now
+        # Only visualize four sequences for now
         break
 
 writer.close()
