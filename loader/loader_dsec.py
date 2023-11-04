@@ -292,10 +292,11 @@ class Sequence(Dataset):
         self.flow_file_paths = sorted(flow_dir.iterdir())
 
         # Localize image files
-        images_dir = Path(seq_path / 'images_left' / 'rectified')
-        assert images_dir.is_dir()
-        image_file_names = [Path(uri).name for uri in self.flow_file_paths]
-        self.images_file_paths = [str(images_dir / name) for name in image_file_names]
+        if self.load_img:
+            images_dir = Path(seq_path / 'images_left' / 'rectified')
+            assert images_dir.is_dir()
+            image_file_names = [Path(uri).name for uri in self.flow_file_paths]
+            self.images_file_paths = [str(images_dir / name) for name in image_file_names]
 
     def events_to_voxel_grid(self, p, t, x, y, device: str='cpu'):
         t = (t - t[0]).astype('float32')
