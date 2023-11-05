@@ -90,7 +90,7 @@ def data_to_video(args):
                 for key in ["raw_events_old", "raw_events_new"]:
                     event_sequence = sample[key]
                     event_img = events_to_event_image(event_sequence, height, width)                    
-                    event_img = event_img.transpose(1, 2, 0)
+                    event_img = event_img.numpy().transpose(1, 2, 0)
                     top_row_content.append(event_img)
             
 
