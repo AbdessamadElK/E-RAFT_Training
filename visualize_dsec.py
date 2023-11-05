@@ -33,7 +33,7 @@ def data_to_video(args):
 
 
     # Visualization
-    VIDEO_FILE_TEMPLATE = "{}_video.mp4"
+    VIDEO_FILE_TEMPLATE = "{}_{}.mp4"
 
     sequence_names = provider.name_mapper
     vis_count = 0
@@ -43,6 +43,7 @@ def data_to_video(args):
     # Two sections for event sub-sequences
     # One section for image data
     imgs_per_frame = 1 + 2 * args.events + args.images
+    data_label = "flow" + "_events" * args.events + "_images" * args.images
 
     layout = "row" if imgs_per_frame <= 3 else "matrix"
 
@@ -62,7 +63,10 @@ def data_to_video(args):
         if not savepath.is_dir():
                 savepath.mkdir(parents = True, exist_ok = True)
 
-        savepath = savepath / VIDEO_FILE_TEMPLATE.format(name)
+        savepath = savepath / VIDEO_FILE_TEMPLATE.format(name, data_label)
+
+        if savepath.is_file() and args.ignore_existing:
+            continue
 
         # writer = skvideo.io.FFmpegWriter(savepath, outputdict = {'-r':str(3)})
         if platform.system() == "Windows":
@@ -153,6 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--images", action="store_true", help="Include image data")
 
     parser.add_argument("-p", "--interpolate", action="store_true", help="Interpolate optical flow")
+    parser.add_argument("-x", "--ignore_existing", action="store_true", help="Ignore sequences that are already visualized in the output directory using the same configuration")
 
     args = parser.parse_args()
 
