@@ -43,7 +43,8 @@ def data_to_video(args):
     # Two sections for event sub-sequences
     # One section for image data
     imgs_per_frame = 1 + 2 * args.events + args.images
-    data_label = "flow" + "_events" * args.events + "_images" * args.images
+    # data_label = "flow" + "_events" * args.events + "_images" * args.images
+    data_label = "video" # for now until I visualize the whole dataset
 
     layout = "row" if imgs_per_frame <= 3 else "matrix"
 
