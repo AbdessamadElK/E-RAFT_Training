@@ -7,12 +7,17 @@ import platform
 
 import numpy as np
 
+import torch
+
+import cv2
+
 import skvideo.io
 
 from tqdm import tqdm
 
 from utils.visualization import visualize_optical_flow
 from utils.visualization import events_to_event_image
+from utils.image_utils import forward_interpolate_pytorch
 
 from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
@@ -65,11 +70,9 @@ def data_to_video(args):
         else:
             writer = skvideo.io.FFmpegWriter(str(savepath))
 
+        description = f"Sequence {vis_count+1}: {name}"
 
-        print(f"Sequence {vis_count+1}: {name}")
-
-
-        for sample in tqdm(iter(loader_instance)):
+        for sample in tqdm(iter(loader_instance), total = len(loader_instance), desc = description):
             ts_start, ts_end = sample["timestamp"].squeeze()
 
             # Get events as image
@@ -81,16 +84,29 @@ def data_to_video(args):
             if args.events:
                 for key in ["raw_events_old", "raw_events_new"]:
                     event_sequence = sample[key]
-                    event_img = events_to_event_image(event_sequence, height, width)
-                    event_img = event_img.numpy().transpose(1, 2, 0)
+                    event_img = events_to_event_image(event_sequence, height, width)                    
+                    event_img = event_img.transpose(1, 2, 0)
                     top_row_content.append(event_img)
-                pass
             
 
             # Get optical flow as image
             flow_gt = sample["flow_gt"]
-            flow_img, _ = visualize_optical_flow(flow_gt, return_bgr=True)
+
+            if args.interpolate:
+                # TODO : Find a way to interpolate optical flow and get a dense visualization
+                pass
+
+            flow_img, _ = visualize_optical_flow(flow_gt.squeeze(), return_bgr=True)
             flow_img = flow_img * 255
+
+            ## Adding text label to the image (experimental)
+            # labeled = cv2.putText(flow_img, "Optical Flow", (50, 50),
+            #                               fontFace = 3,
+            #                               fontScale = 1,
+            #                               color = (255, 35, 35),
+            #                               thickness=1)
+            
+            # flow_img = np.asarray(labeled)
 
             if layout == "row":
                 top_row_content.append(flow_img)
@@ -118,6 +134,8 @@ def data_to_video(args):
 
         writer.close()
 
+        vis_count += 1
+
 #def data_to_video(args):
 #   pass
 
@@ -133,6 +151,8 @@ if __name__ == "__main__":
     # parser.add_argument("-f", "--flow", type=bool, default=True, help="ptical flow")
     parser.add_argument("-e", "--events", action="store_true", help="Include event data")
     parser.add_argument("-m", "--images", action="store_true", help="Include image data")
+
+    parser.add_argument("-p", "--interpolate", action="store_true", help="Interpolate optical flow")
 
     args = parser.parse_args()
 
