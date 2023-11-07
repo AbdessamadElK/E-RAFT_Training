@@ -2,36 +2,40 @@ from pathlib import Path
 
 import json
 
-# import torch
-# import torch.nn as nn
-# from torch.utils.data import DataLoader
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
 
 from loader.loader_dsec import Sequence
-# from loader.loader_dsec import DatasetProvider
+from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
-# from utils.visualization import visualize_optical_flow
-# from model.eraft import ERAFT
+from utils.visualization import visualize_optical_flow
+from model.eraft import ERAFT
 
 import skvideo.io
 
-# from tqdm import tqdm
+from tqdm import tqdm
 
 import numpy as np
 
 dsec_path = Path("C:/users/public/dsec_flow")
 
-seq_path = dsec_path / "train" / "zurich_city_01_a"
-
-seq = Sequence(seq_path, RepresentationType.VOXEL, mode = "train")
-
-for path in seq.images_file_paths:
-    print(path)
-
-quit()
 
 provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train")
 
+sequence_names = provider.name_mapper
+
 loader = DataLoader(provider.get_dataset(), batch_size= 1, shuffle=False)
+
+for idx, name in enumerate(sequence_names):
+    sequence = loader.dataset.datasets[idx]
+
+    print(name, " : ", len(sequence))
+    
+    pass
+
+quit()
+
 
 config = json.load(open("./config/dsec_standard.json"))
 n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
