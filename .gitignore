@@ -8,4 +8,5 @@ statistics*
 utils/login_credentials.json
 build/
 checkpoints/*.tar
+checkpoints/*.pth
 !config/examples
