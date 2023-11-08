@@ -1,5 +1,5 @@
 {
-    "name": "dsec_standard",
+    "name": "train_w_eval",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,

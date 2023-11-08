@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
 
+import evaluation
+
 # sys.path.append('core')
 
 import json
@@ -64,7 +66,7 @@ DSEC_PATH = Path("/home/abdou/DSEC")
 # exclude extremly large displacements
 MAX_FLOW = 400
 SUM_FREQ = 100
-VAL_FREQ = 5000
+VAL_FREQ = 100
 
 # Visualization
 VIS_FREQ = 50
@@ -118,12 +120,15 @@ def fetch_optimizer(stage, config, model):
     
 
 class Logger:
-    def __init__(self, model, scheduler):
+    def __init__(self, model, scheduler, runs_save_dir, sum_freq = 100):
         self.model = model
         self.scheduler = scheduler
         self.total_steps = 0
         self.running_loss = {}
-        self.writer = SummaryWriter(f"C:/users/public/runs/run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
+        self.sum_freq = sum_freq
+
+        savepath = Path(runs_save_dir) / f"run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+        self.writer = SummaryWriter(str(savepath))
 
     def _print_training_status(self):
         metrics_data = [self.running_loss[k]/SUM_FREQ for k in sorted(self.running_loss.keys())]
@@ -137,7 +142,7 @@ class Logger:
             self.writer.add_scalar(k, self.running_loss[k]/SUM_FREQ, self.total_steps)
             self.running_loss[k] = 0.0
 
-    def push(self, metrics):
+    def push(self, metrics:dict, images:dict):
         self.total_steps += 1
 
         for key in metrics:
@@ -176,11 +181,13 @@ def train(config):
     if config["stage"] != 'chairs':
         model.module.freeze_bn()
 
-    provider = DatasetProvider(Path(config["path"]), mode = "train", representation_type=RepresentationType.VOXEL)
+    data_loaders = {}
+    for mode in ["train", "validation"]:
+        provider = DatasetProvider(Path(config["path"]), mode = mode, representation_type=RepresentationType.VOXEL)
+        loader = DataLoader(provider.get_dataset())
+        data_loaders[mode] = loader
 
-    train_loader = DataLoader(provider.get_dataset())
-
-    # TODO: Implement fetch_dataloader function
+    # TODO: Implement fetch_dataloader function to support other datasets
     #train_loader = datasets.fetch_dataloader(config)
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
@@ -188,6 +195,8 @@ def train(config):
     writer = SummaryWriter(f"C:/users/public/runs/run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
 
     total_steps = 0
+    val_steps = 0
+    running_loss = {}
     scaler = GradScaler(enabled=train_config["mixed_precision"])
     # logger = Logger(model, scheduler)
 
@@ -199,7 +208,7 @@ def train(config):
     for epoch in range(epochs):
         # description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
 
-        for data_blob in tqdm(train_loader, desc="[Epoch {}/{}] ".format(epoch+1, epochs)):
+        for data_blob in tqdm(data_loaders["train"], desc="[Epoch {}/{}] ".format(epoch+1, epochs)):
             optimizer.zero_grad()
 
             # Network inputs (event volumes)
@@ -228,9 +237,34 @@ def train(config):
 
             # logger.push(metrics)
 
+            # Update the running loss
+            for key, value in metrics.items():
+                if not key in running_loss:
+                    running_loss[key] = 0.0
+                
+                running_loss[key] += metrics[key]
+
+            if total_steps % SUM_FREQ == SUM_FREQ -1:
+                # Report the train's running loss
+                for key, value in running_loss.items():
+                    writer.add_scalar(key, value / SUM_FREQ, total_steps)
+                    running_loss[key] = 0.0
+
             if total_steps % VAL_FREQ == VAL_FREQ - 1:
                 PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
                 torch.save(model.state_dict(), PATH)
+
+                # Get validation results
+                results = {}
+                results = evaluation.evaluate_dsec(model,
+                                                   data_loaders["evaluation"],
+                                                   val_step = val_steps,
+                                                   writer = writer,
+                                                   iters=train_config["iters"])
+
+                for key, value in results.items():
+                    assert key not in running_loss
+                    writer.add_scalar(key, value, val_steps)
 
                 # results = {}
                 # for val_dataset in config.validation:
@@ -246,6 +280,8 @@ def train(config):
                 model.train()
                 if config["stage"] != 'chairs':
                     model.module.freeze_bn()
+            
+                val_steps += 1
 
             if total_steps % (VIS_FREQ + 1)  == 0:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)

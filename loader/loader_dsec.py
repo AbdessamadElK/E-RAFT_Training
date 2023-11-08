@@ -182,7 +182,7 @@ class Sequence(Dataset):
                  num_bins: int=15, transforms=None, name_idx=0, visualize=False, load_img = False, load_raw_events = False):
         assert num_bins >= 1
         assert seq_path.is_dir()
-        assert mode in {'train', 'test'}
+        assert mode in {'train', 'validation', 'test'}
         if mode == "test" and delta_t_ms is None:
             delta_t_ms = 100
         
@@ -232,7 +232,8 @@ class Sequence(Dataset):
 
         if self.mode == "test":
             flow_timestamp_path = seq_path / 'test_forward_flow_timestamps.csv'
-        elif self.mode == "train":
+
+        else:
             flow_timestamp_path = seq_path / 'flow_forward_timestamps.txt'
         
         assert flow_timestamp_path.is_file()
@@ -269,7 +270,7 @@ class Sequence(Dataset):
             self.timestamps_flow = self.timestamps_images[::2][1:-1]
             self.indices = image_indices[::2][1:-1]
 
-        elif self.mode == "train":
+        else:
             self.timestamps_flow = flow_timestamps
             image_indices = [item[0] for item in enumerate(self.timestamps_images) if item[1] in self.timestamps_flow[:,0]]
 
@@ -371,7 +372,7 @@ class Sequence(Dataset):
             output['save_submission'] = file_index in self.idx_to_visualize
             output['visualize'] = self.visualize_samples
         
-        elif self.mode == "train":
+        else:
             # Start and End times of the flow subsequences
             t0, t1 = self.timestamps_flow[index]
             ts_start = [t0, (t0+t1)//2]
@@ -506,6 +507,7 @@ class SequenceRecurrent(Sequence):
 class DatasetProvider:
     def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
                  mode = 'test', type='standard', load_raw_events = False, load_img = False, config=None, visualize=False):
+        assert mode in {'train', 'validation', 'test'}
         path = dataset_path / mode
         assert dataset_path.is_dir(), str(dataset_path)
         assert path.is_dir(), str(path)

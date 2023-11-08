@@ -21,18 +21,20 @@ import numpy as np
 dsec_path = Path("C:/users/public/dsec_flow")
 
 
-provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train")
+provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True)
 
 sequence_names = provider.name_mapper
 
 loader = DataLoader(provider.get_dataset(), batch_size= 1, shuffle=False)
 
-for idx, name in enumerate(sequence_names):
-    sequence = loader.dataset.datasets[idx]
+for data in loader:
+    flow_img, _ = visualize_optical_flow(data["flow_gt"].squeeze().numpy(), return_bgr=True)
+    flow_img = flow_img * 255
 
-    print(name, " : ", len(sequence))
-    
-    pass
+    print(flow_img.shape)
+
+    # c_sequence = torch.concatenate([sequence1, sequence2], dim = 1)
+    break
 
 quit()
 
