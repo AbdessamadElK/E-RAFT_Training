@@ -283,7 +283,7 @@ def train(config):
             
                 val_steps += 1
 
-            if total_steps % (VIS_FREQ + 1)  == 0:
+            if total_steps % (VIS_FREQ + 1)  == 0 and False:
                 # TODO : Visualize events (we only have event volumes but we don't have raw events)
                 with torch.no_grad():
                     # Visualize ground truth
