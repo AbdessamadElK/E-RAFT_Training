@@ -246,13 +246,13 @@ def train(config):
                 
                 running_loss[key] += metrics[key]
 
-            if total_steps % sum_freq == sum_freq -1:
+            if total_steps and total_steps % sum_freq == 0:
                 # Report the train's running loss
                 for key, value in running_loss.items():
                     writer.add_scalar(key, value / SUM_FREQ, total_steps)
                     running_loss[key] = 0.0
 
-            if total_steps % val_freq == val_freq - 1:
+            if total_steps and total_steps % val_freq == 0:
                 PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
                 torch.save(model.state_dict(), PATH)
 
