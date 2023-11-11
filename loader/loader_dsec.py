@@ -227,6 +227,11 @@ class Sequence(Dataset):
         self.load_img = load_img
         self.load_raw_events = load_raw_events
 
+        if mode == "validation":
+            # Load images and raw events for visualization
+            self.load_img = True
+            self.load_raw_events = True
+
         # Get timestamps files
         images_timestamp_path = seq_path / 'images_timestamps.txt'
 
