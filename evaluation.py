@@ -49,13 +49,14 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             # Image data
             image = data["image"]
             top_row_content.append(image)
+            print(image.shape)
 
             # Events as image
             event_sequence = data["raw_events_old"]
-            print(event_sequence.shape)
             event_img = events_to_event_image(event_sequence.numpy().squeeze(), height, width)
             event_img = event_img.numpy().transpose(1, 2, 0)
             top_row_content.append(event_img)
+            print(event_img.shape)
 
             # Visualize
             image_top_row = np.hstack(top_row_content)
