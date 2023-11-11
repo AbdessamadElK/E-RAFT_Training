@@ -11,6 +11,9 @@ from tqdm import tqdm
 def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWriter = None):
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
+    
+    # Visualize at the 10th step during debugging
+    vis_idx = 10
 
     epe_list = []
 
@@ -48,7 +51,8 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             top_row_content.append(image)
 
             # Events as image
-            event_img = events_to_event_image(data["raw_events_old"].numpy(), height, width)
+            event_sequence = data["raw_events_old"]
+            event_img = events_to_event_image(event_sequence, height, width)
             event_img = event_img.numpy().transpose(1, 2, 0)
             top_row_content.append(event_img)
 
