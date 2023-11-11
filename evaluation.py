@@ -12,21 +12,18 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
-    # Visualize at the 10th step during debugging
-    vis_idx = 10
-
     epe_list = []
 
-    for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating"):
-        volume_1 = data["event_volume_old"]
-        volume_2 = data["event_volume_new"]
-        flow_gt = data["flow_gt"]
-        valid = data["flow_valid"]
+    for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating", leave=False):
+        volume_1 = data["event_volume_old"].cuda()
+        volume_2 = data["event_volume_new"].cuda()
+        flow_gt = data["flow_gt"].cuda()
+        valid = data["flow_valid"].cuda()
 
         valid = valid >= 0.5
 
         _, preds = model(volume_1, volume_2, iters)
-        prediction = preds[-1].cpu()
+        prediction = preds[-1]
 
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.view(-1).numpy())
@@ -36,31 +33,32 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             bottom_row_content = []
 
             # Prediction image
-            pred_img, _ = visualize_optical_flow(prediction.numpy().squeeze(), return_bgr=True)
+            pred_img, _ = visualize_optical_flow(prediction.squeeze().numpy().cpu(), return_bgr=True)
             pred_img = pred_img * 255
             bottom_row_content.append(pred_img)
 
             # Ground truth optical flow image
-            flow_img, _ = visualize_optical_flow(flow_gt.numpy().squeeze(), return_bgr=True)
+            flow_img, _ = visualize_optical_flow(flow_gt.squeeze().numpy().cpu(), return_bgr=True)
             flow_img = flow_img * 255
             bottom_row_content.append(flow_img)
             height, width, _ = flow_img.shape
 
             # Image data
-            image = data["image"].numpy().squeeze()
+            image = data["image"].squeeze().numpy()
             top_row_content.append(image)
 
             # Events as image
             event_sequence = data["raw_events_old"]
-            event_img = events_to_event_image(event_sequence.numpy().squeeze(), height, width)
+            event_img = events_to_event_image(event_sequence.squeeze().numpy(), height, width)
             event_img = event_img.numpy().transpose(1, 2, 0)
             top_row_content.append(event_img)
 
-            # Visualize
+            # Build visualization image
             image_top_row = np.hstack(top_row_content)
             image_bottom_row = np.hstack(bottom_row_content)
             image_matrix = np.vstack([image_top_row, image_bottom_row])
 
+            # Visualize
             writer.add_image("Visualization", image_matrix, val_step, dataformats="HWC")
 
     

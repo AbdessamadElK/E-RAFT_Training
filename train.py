@@ -239,51 +239,52 @@ def train(config):
 
             # logger.push(metrics)
 
-            # Update the running loss
-            for key, value in metrics.items():
-                if not key in running_loss:
-                    running_loss[key] = 0.0
+            with torch.no_grad():
+                # Update the running loss
+                for key, value in metrics.items():
+                    if not key in running_loss:
+                        running_loss[key] = 0.0
+                    
+                    running_loss[key] += value
+
+                if total_steps and total_steps % sum_freq == 0:
+                    # Report the train's running loss
+                    for key, value in running_loss.items():
+                        writer.add_scalar(key, value / sum_freq, total_steps)
+                        running_loss[key] = 0.0
+
+                if total_steps and total_steps % val_freq == 0:
+                    PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
+                    torch.save(model.state_dict(), PATH)
+
+                    # Get validation results
+                    results = {}
+                    results = evaluation.evaluate_dsec(model,
+                                                    data_loaders["validation"],
+                                                    val_step = total_steps,
+                                                    writer = writer,
+                                                    iters=train_config["iters"])
+
+                    for key, value in results.items():
+                        assert key not in running_loss
+                        writer.add_scalar(key, value, total_steps)
+
+                    # results = {}
+                    # for val_dataset in config.validation:
+                    #     if val_dataset == 'chairs':
+                    #         results.update(evaluate.validate_chairs(model.module))
+                    #     elif val_dataset == 'sintel':
+                    #         results.update(evaluate.validate_sintel(model.module))
+                    #     elif val_dataset == 'kitti':
+                    #         results.update(evaluate.validate_kitti(model.module))
+
+                    # logger.write_dict(results)
+                    
+                    model.train()
+                    if config["stage"] != 'chairs':
+                        model.module.freeze_bn()
                 
-                running_loss[key] += metrics[key]
-
-            if total_steps and total_steps % sum_freq == 0:
-                # Report the train's running loss
-                for key, value in running_loss.items():
-                    writer.add_scalar(key, value / SUM_FREQ, total_steps)
-                    running_loss[key] = 0.0
-
-            if total_steps and total_steps % val_freq == 0:
-                PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
-                torch.save(model.state_dict(), PATH)
-
-                # Get validation results
-                results = {}
-                results = evaluation.evaluate_dsec(model,
-                                                   data_loaders["validation"],
-                                                   val_step = total_steps,
-                                                   writer = writer,
-                                                   iters=train_config["iters"])
-
-                for key, value in results.items():
-                    assert key not in running_loss
-                    writer.add_scalar(key, value, total_steps)
-
-                # results = {}
-                # for val_dataset in config.validation:
-                #     if val_dataset == 'chairs':
-                #         results.update(evaluate.validate_chairs(model.module))
-                #     elif val_dataset == 'sintel':
-                #         results.update(evaluate.validate_sintel(model.module))
-                #     elif val_dataset == 'kitti':
-                #         results.update(evaluate.validate_kitti(model.module))
-
-                # logger.write_dict(results)
-                
-                model.train()
-                if config["stage"] != 'chairs':
-                    model.module.freeze_bn()
-            
-                val_steps += 1
+                    val_steps += 1
 
             if total_steps % (VIS_FREQ + 1)  == 0 and False:
                 with torch.no_grad():
