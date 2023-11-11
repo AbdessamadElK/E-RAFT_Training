@@ -38,7 +38,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             bottom_row_content.append(pred_img)
 
             # Ground truth optical flow image
-            flow_img, _ = visualize_optical_flow(flow_gt.squeeze(), return_bgr=True)
+            flow_img, _ = visualize_optical_flow(flow_gt.numpy().squeeze(), return_bgr=True)
             flow_img = flow_img * 255
             bottom_row_content.append(flow_img)
             height, width, _ = flow_img.shape
