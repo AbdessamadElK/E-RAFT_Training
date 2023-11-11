@@ -200,7 +200,6 @@ def train(config):
     scaler = GradScaler(enabled=train_config["mixed_precision"])
     # logger = Logger(model, scheduler)
 
-    VAL_FREQ = 5000
     add_noise = False
 
     epochs = train_config["epochs"]
@@ -257,7 +256,7 @@ def train(config):
                 # Get validation results
                 results = {}
                 results = evaluation.evaluate_dsec(model,
-                                                   data_loaders["evaluation"],
+                                                   data_loaders["validation"],
                                                    val_step = val_steps,
                                                    writer = writer,
                                                    iters=train_config["iters"])
@@ -284,7 +283,6 @@ def train(config):
                 val_steps += 1
 
             if total_steps % (VIS_FREQ + 1)  == 0 and False:
-                # TODO : Visualize events (we only have event volumes but we don't have raw events)
                 with torch.no_grad():
                     # Visualize ground truth
                     gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
