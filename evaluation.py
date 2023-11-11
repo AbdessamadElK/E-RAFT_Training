@@ -61,7 +61,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             image_bottom_row = np.hstack(bottom_row_content)
             image_matrix = np.vstack([image_top_row, image_bottom_row])
 
-            writer.add_image("Visualization", image_matrix, val_step)
+            writer.add_image("Visualization", image_matrix, val_step, formats="HWC")
 
     
     epe_all = np.concatenate(epe_list)
