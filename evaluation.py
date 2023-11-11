@@ -22,7 +22,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
         valid = valid >= 0.5
 
         _, preds = model(volume_1, volume_2, iters)
-        prediction = preds[-1]
+        prediction = preds[-1].cpu()
 
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.view(-1).numpy())
