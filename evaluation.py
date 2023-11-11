@@ -5,6 +5,7 @@ from utils.visualization import events_to_event_image, visualize_optical_flow
 
 import numpy as np
 
+from tqdm import tqdm
 
 @torch.no_grad()
 def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWriter = None):
@@ -13,7 +14,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
 
     epe_list = []
 
-    for idx, data in enumerate(val_loader):
+    for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating"):
         volume_1 = data["event_volume_old"]
         volume_2 = data["event_volume_new"]
         flow_gt = data["flow_gt"]
@@ -32,7 +33,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             bottom_row_content = []
 
             # Prediction image
-            pred_img, _ = visualize_optical_flow(prediction.squeeze(), return_bgr=True)
+            pred_img, _ = visualize_optical_flow(prediction.numpy().squeeze(), return_bgr=True)
             pred_img = pred_img * 255
             bottom_row_content.append(pred_img)
 
