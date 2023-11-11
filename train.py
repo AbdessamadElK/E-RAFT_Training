@@ -167,7 +167,10 @@ class Logger:
 
 def train(config):
     train_config = config["train"]
-    n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"] 
+    n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
+
+    sum_freq = config["validation"]["sum_freq"] 
+    val_freq = config["validation"]["val_freq"]
 
     model = nn.DataParallel(ERAFT(config, n_first_channels), device_ids=config["train"]["gpus"])
     print("Parameter Count: %d" % count_parameters(model))
@@ -243,13 +246,13 @@ def train(config):
                 
                 running_loss[key] += metrics[key]
 
-            if total_steps % SUM_FREQ == SUM_FREQ -1:
+            if total_steps % sum_freq == sum_freq -1:
                 # Report the train's running loss
                 for key, value in running_loss.items():
                     writer.add_scalar(key, value / SUM_FREQ, total_steps)
                     running_loss[key] = 0.0
 
-            if total_steps % VAL_FREQ == VAL_FREQ - 1:
+            if total_steps % val_freq == val_freq - 1:
                 PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
                 torch.save(model.state_dict(), PATH)
 
@@ -257,13 +260,13 @@ def train(config):
                 results = {}
                 results = evaluation.evaluate_dsec(model,
                                                    data_loaders["validation"],
-                                                   val_step = val_steps,
+                                                   val_step = total_steps,
                                                    writer = writer,
                                                    iters=train_config["iters"])
 
                 for key, value in results.items():
                     assert key not in running_loss
-                    writer.add_scalar(key, value, val_steps)
+                    writer.add_scalar(key, value, total_steps)
 
                 # results = {}
                 # for val_dataset in config.validation:

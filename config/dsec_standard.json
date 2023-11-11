@@ -1,5 +1,5 @@
 {
-    "name": "train_w_eval",
+    "name": "complete_train",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -28,7 +28,7 @@
     "train": {
         "gpus": [0],
         "lr": 0.0001,
-        "epochs": 1,
+        "epochs": 50,
         "batch_size": 1,
         "restore_ckpt": null,
         "wdecay": 0.00004,
@@ -38,5 +38,9 @@
         "mixed_precision": false,
         "gamma": 0.8,
         "clip": 1.0
+    },
+    "validation": {
+        "sum_freq" : 100,
+        "val_freq" : 5000
     }
 }

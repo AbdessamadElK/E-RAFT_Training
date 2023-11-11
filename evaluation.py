@@ -67,10 +67,10 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
     epe_all = np.concatenate(epe_list)
 
     results = {
-        'val_epe': epe_all.mean().item(),
-        'val_1px': (epe_all < 1).float().mean().item(),
-        'val_3px': (epe_all < 3).float().mean().item(),
-        'val_5px': (epe_all < 5).float().mean().item(),
+        'val_epe': np.mean(epe_all),
+        'val_1px': np.mean(epe_all < 1),
+        'val_3px': np.mean(epe_all < 3),
+        'val_5px': np.mean(epe_all < 5),
     }
 
     return results
