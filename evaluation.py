@@ -13,9 +13,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
 
     epe_list = []
 
-    for idx in range(len(val_loader)):
-        data = val_loader[idx]
-        
+    for idx, data in enumerate(val_loader):
         volume_1 = data["event_volume_old"]
         volume_2 = data["event_volume_new"]
         flow_gt = data["flow_gt"]
