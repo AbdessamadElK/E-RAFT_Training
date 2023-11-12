@@ -12,7 +12,6 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
-    vis_idx = 10
     epe_list = []
 
     for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating", leave=False):
