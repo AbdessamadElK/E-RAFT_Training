@@ -12,7 +12,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
-    vis_idx = 10 # for debugging
+    # vis_idx = 10 # for debugging
 
     epe_list = []
 
