@@ -41,6 +41,6 @@
     },
     "validation": {
         "sum_freq" : 100,
-        "val_freq" : 5000
+        "val_freq" : 10
     }
 }

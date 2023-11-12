@@ -12,6 +12,8 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
+    vis_idx = 10 # for debugging
+
     epe_list = []
 
     for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating", leave=False):
@@ -34,24 +36,22 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
 
             # Prediction image
             pred_img, _ = visualize_optical_flow(prediction.cpu().squeeze().numpy(), return_bgr=True)
-            pred_img = pred_img * 255
             bottom_row_content.append(pred_img)
 
             # Ground truth optical flow image
             flow_img, _ = visualize_optical_flow(flow_gt.cpu().squeeze().numpy(), return_bgr=True)
-            flow_img = flow_img * 255
             bottom_row_content.append(flow_img)
             height, width, _ = flow_img.shape
 
             # Image data
             image = data["image"].squeeze().numpy()
-            top_row_content.append(image)
+            top_row_content.append(image / 255)
 
             # Events as image
             event_sequence = data["raw_events_old"]
             event_img = events_to_event_image(event_sequence.squeeze().numpy(), height, width)
             event_img = event_img.numpy().transpose(1, 2, 0)
-            top_row_content.append(event_img)
+            top_row_content.append(event_img / 255)
 
             # Build visualization image
             image_top_row = np.hstack(top_row_content)
