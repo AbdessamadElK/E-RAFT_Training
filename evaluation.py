@@ -26,19 +26,19 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
         prediction = preds[-1]
 
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
-        epe_list.append(epe.view(-1).numpy())
+        epe_list.append(epe.cpu().view(-1).numpy())
 
         if (not writer is None) and (idx == vis_idx):
             top_row_content = []
             bottom_row_content = []
 
             # Prediction image
-            pred_img, _ = visualize_optical_flow(prediction.squeeze().numpy().cpu(), return_bgr=True)
+            pred_img, _ = visualize_optical_flow(prediction.cpu().squeeze().numpy(), return_bgr=True)
             pred_img = pred_img * 255
             bottom_row_content.append(pred_img)
 
             # Ground truth optical flow image
-            flow_img, _ = visualize_optical_flow(flow_gt.squeeze().numpy().cpu(), return_bgr=True)
+            flow_img, _ = visualize_optical_flow(flow_gt.cpu().squeeze().numpy(), return_bgr=True)
             flow_img = flow_img * 255
             bottom_row_content.append(flow_img)
             height, width, _ = flow_img.shape
