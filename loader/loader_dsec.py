@@ -9,6 +9,8 @@ from numba import jit
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
+from torchvision.transforms import v2
+
 from utils import visualization as visu
 from matplotlib import pyplot as plt
 from utils import transformers
@@ -179,7 +181,9 @@ class EventSlicer:
 
 class Sequence(Dataset):
     def __init__(self, seq_path: Path, representation_type: RepresentationType, mode: str='test', delta_t_ms: 'int|None' = None,
-                 num_bins: int=15, transforms=None, name_idx=0, visualize=False, load_img = False, load_raw_events = False):
+                 num_bins: int=15, crop_size = None, hflip = False, vflip = False, transforms=None, name_idx=0,
+                 visualize=False, load_img = False, load_raw_events = False):
+        
         assert num_bins >= 1
         assert seq_path.is_dir()
         assert mode in {'train', 'validation', 'test'}
@@ -227,6 +231,25 @@ class Sequence(Dataset):
         self.load_img = load_img
         self.load_raw_events = load_raw_events
 
+        self.crop = crop_size is not None
+        self.crop_size = crop_size
+        self.hflip = hflip
+        self.vflip = vflip
+        
+        # Save output dimensions
+        self.height = 480
+        self.width = 640
+
+        # In the case of random cropping
+        if self.crop:
+            ## where crop_size = [height, width]
+            self.crop_height = crop_size[0]
+            self.crop_width = crop_size[1]            
+            assert 2 < self.crop_height <= self.height
+            assert 2 < self.crop_width <= self.width
+            
+        self.num_bins = num_bins
+
         if mode == "validation":
             # Load images and raw events for visualization
             self.load_img = True
@@ -254,18 +277,14 @@ class Sequence(Dataset):
 
         self.timestamps_images = np.loadtxt(images_timestamp_path, dtype="int64")
 
-        # Save output dimensions
-        self.height = 480
-        self.width = 640
-        self.num_bins = num_bins
-
         # Just for now, we always train with num_bins=15
         assert self.num_bins==15
 
         # Set event representation
+        out_height, out_width = self.get_image_width_height()
         self.voxel_grid = None
         if representation_type == RepresentationType.VOXEL:
-            self.voxel_grid = VoxelGrid((self.num_bins, self.height, self.width), normalize=True)
+            self.voxel_grid = VoxelGrid((self.num_bins, out_height, out_width), normalize=True)
 
         #Load and compute timestamps and indices
         if self.mode == "test":
@@ -340,6 +359,9 @@ class Sequence(Dataset):
         h5f.close()
 
     def get_image_width_height(self):
+        if self.crop:
+            return self.crop_height, self.crop_width
+        
         return self.height, self.width
 
     def __len__(self):
@@ -361,6 +383,7 @@ class Sequence(Dataset):
         events_names = ['raw_events_old', 'raw_events_new']
         # images_names = ['first_image', 'second_image']
         output = dict()
+        output['name_map']=self.name_idx
 
         assert index < len(self.timestamps_flow)
 
@@ -386,6 +409,14 @@ class Sequence(Dataset):
             # Timestamp
             output['timestamp'] = self.timestamps_flow[index]
 
+        if self.crop:
+            crop_window = {"start_x" : np.random.randint(0, self.width - self.crop_width),
+                            "start_y" : np.random.randint(0, self.height - self.crop_height),
+                            "crop_width" : self.crop_width,
+                            "crop_height" : self.crop_height}
+            
+        hflip = self.hflip and np.random.rand() < 0.5
+        vflip = self.vflip and np.random.rand() < 0.5
 
         for i in range(len(volume_names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
@@ -399,21 +430,41 @@ class Sequence(Dataset):
             x_rect = xy_rect[:, 0]
             y_rect = xy_rect[:, 1]
 
-            if crop_window is not None:
-                # Cropping (+- 2 for safety reasons)
+            if hflip:
+                x = x.max() - x
+                x_rect = x_rect.max() - x_rect
+
+            if vflip:
+                y = y.max() - y
+                y_rect = y_rect.max() - y_rect
+
+            if self.load_raw_events:
+                # Load raw events (for visualization)
+                if not self.crop:
+                    event_sequence = np.vstack([t, x, y, p * 2.0 - 1.0]).transpose()
+                    output[events_names[i]] = event_sequence
+                else:
+                    # Cropping raw data (+- 2 for safety reasons)
+                    x_mask = (x >= crop_window['start_x']-2) & (x < crop_window['start_x']+crop_window['crop_width']+2)
+                    y_mask = (y >= crop_window['start_y']-2) & (y < crop_window['start_y']+crop_window['crop_height']+2)
+                    mask_combined = x_mask & y_mask
+                    p_crop = p[mask_combined]
+                    t_crop = t[mask_combined]
+                    x_crop = x[mask_combined] - crop_window['start_x']
+                    y_crop = y[mask_combined] - crop_window['start_y']
+                    
+                    output[events_names[i]] = np.vstack([t_crop, x_crop, y_crop, p_crop * 2.0 - 1.0]).transpose()
+
+            if self.crop:
+                # Cropping rectified data (+- 2 for safety reasons)
                 x_mask = (x_rect >= crop_window['start_x']-2) & (x_rect < crop_window['start_x']+crop_window['crop_width']+2)
                 y_mask = (y_rect >= crop_window['start_y']-2) & (y_rect < crop_window['start_y']+crop_window['crop_height']+2)
                 mask_combined = x_mask & y_mask
                 p = p[mask_combined]
                 t = t[mask_combined]
-                x_rect = x_rect[mask_combined]
-                y_rect = y_rect[mask_combined]
+                x_rect = x_rect[mask_combined] - crop_window['start_x']
+                y_rect = y_rect[mask_combined] - crop_window['start_y']   
 
-            if self.load_raw_events:
-                # Load raw events for visualization
-                p = p * 2.0 - 1.0
-                event_sequence = np.vstack([t, x, y, p]).transpose()
-                output[events_names[i]] = event_sequence
 
             if self.voxel_grid is None:
                 raise NotImplementedError
@@ -421,19 +472,44 @@ class Sequence(Dataset):
                 event_representation = self.events_to_voxel_grid(p, t, x_rect, y_rect)
                 output[volume_names[i]] = event_representation
 
-            output['name_map']=self.name_idx
-
         # Also include optical flow ground truth
         flow_path = Path(self.flow_file_paths[index])
-        output['flow_gt'], output['flow_valid'] = self.load_flow(flow_path)
+        flow_gt, flow_valid = self.load_flow(flow_path)
         # Channels first
-        output['flow_gt'] = output['flow_gt'].transpose(2, 0, 1)
+        output["flow_gt"] = torch.from_numpy(flow_gt.transpose(2, 0, 1))
+        output["flow_valid"] = torch.from_numpy(flow_valid)
 
         # Include image data (only the first image at t0)
         if self.load_img:
             first_image = imageio.imread(self.images_file_paths[index], format="PNG-FI")
             output['image'] = cv2.resize(first_image, (self.width, self.height))
+            output['image'] = v2.ToTensor()(output['image'])
 
+        # Apply transforms to the rest of data
+        keys = ["flow_gt", "flow_valid", "image"]
+
+        # self.hflip = self.hflip and np.random.rand() < 0.5
+        # self.vflip = self.vflip and np.random.rand() < 0.5
+        for key in keys:
+
+            if key in output and hflip:
+                output[key] = v2.RandomHorizontalFlip(p=1)(output[key])
+                if key == "flow_gt":
+                    # Flip the x components of the optical flow
+                    output[key][0::] = -output[key][0::]
+
+            if key in output and vflip:
+                output[key] = v2.RandomVerticalFlip(p=1)(output[key])
+                if key == "flow_gt":
+                    # Flip the y compoments of the optical flow
+                    output[key][1::] = -output[key][1::]
+
+            if key in output and self.crop:
+                output[key] = v2.functional.crop(output[key],
+                                                     top = crop_window["start_y"],
+                                                     left = crop_window["start_x"],
+                                                     height = crop_window["crop_height"],
+                                                     width = crop_window["crop_width"])
 
         return output
 
@@ -511,7 +587,9 @@ class SequenceRecurrent(Sequence):
 
 class DatasetProvider:
     def __init__(self, dataset_path: Path, representation_type: RepresentationType, delta_t_ms: int=100, num_bins=15,
-                 mode = 'test', type='standard', load_raw_events = False, load_img = False, config=None, visualize=False):
+                 mode = 'test', type='standard', crop_size = None, hflip = False, vflip = False, load_raw_events = False,
+                 load_img = False, config=None, visualize=False):
+        
         assert mode in {'train', 'validation', 'test'}
         path = dataset_path / mode
         assert dataset_path.is_dir(), str(dataset_path)
@@ -528,6 +606,9 @@ class DatasetProvider:
                                                transforms=[],
                                                name_idx=len(self.name_mapper)-1,
                                                visualize=visualize,
+                                               crop_size = crop_size,
+                                               hflip = hflip,
+                                               vflip = vflip,
                                                load_raw_events=load_raw_events,
                                                load_img=load_img))
             elif type == 'warm_start':

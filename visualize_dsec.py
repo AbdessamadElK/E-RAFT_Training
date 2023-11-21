@@ -23,11 +23,15 @@ from loader.loader_dsec import DatasetProvider
 from utils.dsec_utils import RepresentationType
 
 def data_to_video(args):
+    crop_size = (288, 384) if args.crop else None
 
     provider = DatasetProvider(Path(args.input), mode = "train",
                             representation_type=RepresentationType.VOXEL,
                             load_raw_events=args.events,
-                            load_img=args.images)
+                            load_img=args.images,
+                            crop_size=crop_size,
+                            hflip=args.horizontal_flip,
+                            vflip=args.vertical_flip)
 
     train_loader = DataLoader(provider.get_dataset())
 
@@ -78,8 +82,7 @@ def data_to_video(args):
         description = f"Sequence {vis_count+1}: {name}"
 
         for sample in tqdm(iter(loader_instance), total = len(loader_instance), desc = description):
-            ts_start, ts_end = sample["timestamp"].squeeze()
-
+            
             # Get events as image
             height, width = loader_instance.getHeightAndWidth()
             
@@ -159,6 +162,12 @@ if __name__ == "__main__":
 
     parser.add_argument("-p", "--interpolate", action="store_true", help="Interpolate optical flow")
     parser.add_argument("-x", "--ignore_existing", action="store_true", help="Ignore sequences that are already visualized in the output directory using the same configuration")
+
+    # transforms
+    parser.add_argument("-c", "--crop", action="store_true", help = "Activate random cropping to (288, 384)")
+    parser.add_argument("-h", "--horizontal_flip", action="store_true", help = "Activate random horizontal flipping")
+    parser.add_argument("-v", "--vertical_flip", action="store_true", help = "Activate random vertical flipping")
+
 
     args = parser.parse_args()
 
