@@ -27,6 +27,7 @@
     },
     "train": {
         "gpus": [0],
+        "crop_size":[288, 384],
         "lr": 0.0001,
         "epochs": 50,
         "batch_size": 1,
