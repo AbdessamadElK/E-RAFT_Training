@@ -28,8 +28,8 @@
     "train": {
         "gpus": [0],
         "crop_size":[288, 384],
-        "lr": 0.0001,
-        "epochs": 50,
+        "lr": 0.01,
+        "epochs": 1,
         "batch_size": 1,
         "restore_ckpt": null,
         "wdecay": 0.00004,
