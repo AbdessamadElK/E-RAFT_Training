@@ -44,7 +44,7 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             height, width, _ = flow_img.shape
 
             # Image data
-            image = data["image"].squeeze().numpy()
+            image = data["image"].squeeze().numpy().transpose(1, 2, 0)
             top_row_content.append(image / 255)
 
             # Events as image
