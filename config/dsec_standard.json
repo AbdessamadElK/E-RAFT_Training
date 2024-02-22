@@ -1,5 +1,5 @@
 {
-    "name": "complete_train",
+    "name": "first_training",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -28,8 +28,10 @@
     "train": {
         "gpus": [0],
         "crop_size":[288, 384],
-        "lr": 0.01,
-        "epochs": 1,
+        "horizontal_filp": true,
+        "vertical_flip": false,
+        "lr": 0.0001,
+        "epochs": 40,
         "batch_size": 1,
         "restore_ckpt": null,
         "wdecay": 0.00004,
@@ -42,6 +44,6 @@
     },
     "validation": {
         "sum_freq" : 100,
-        "val_freq" : 10
+        "val_freq" : 5000
     }
 }
