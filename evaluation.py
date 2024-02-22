@@ -53,6 +53,11 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             event_img = event_img.numpy().transpose(1, 2, 0)
             top_row_content.append(event_img / 255)
 
+            print("image :", image.shape)
+            print("event_img :", event_img.shape)
+            print("pred_img :", pred_img.shape)
+            print("flow_img :", flow_img.shape)
+
             # Build visualization image
             image_top_row = np.hstack(top_row_content)
             image_bottom_row = np.hstack(bottom_row_content)

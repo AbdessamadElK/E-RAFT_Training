@@ -66,7 +66,7 @@ DSEC_PATH = Path("/home/abdou/DSEC")
 # exclude extremly large displacements
 MAX_FLOW = 400
 SUM_FREQ = 100
-VAL_FREQ = 100
+VAL_FREQ = 10
 
 # Visualization
 VIS_FREQ = 50
