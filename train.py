@@ -190,7 +190,7 @@ def train(config):
                                    mode = mode,
                                    crop_size = train_config["crop_size"],
                                    hflip = train_config["horizontal_filp"] and mode == "train",
-                                   vflip = train_config["vertical_filp"] and mode == "train", 
+                                   vflip = train_config["vertical_flip"] and mode == "train", 
                                    representation_type = RepresentationType.VOXEL)
         loader = DataLoader(provider.get_dataset())
         data_loaders[mode] = loader
