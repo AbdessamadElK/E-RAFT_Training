@@ -1,5 +1,5 @@
 {
-    "name": "first_training",
+    "name": "finetune_full_resolution",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -26,14 +26,14 @@
         "checkpoint": "checkpoints/dsec.tar"
     },
     "train": {
+        "restore_ckpt": "checkpoints/first_training.pth",
         "gpus": [0],
-        "crop_size":[288, 384],
-        "horizontal_filp": true,
+        "crop_size":null,
+        "horizontal_filp": false,
         "vertical_flip": false,
-        "lr": 0.0001,
-        "epochs": 40,
+        "lr": 0.00001,
+        "epochs": 10,
         "batch_size": 1,
-        "restore_ckpt": null,
         "wdecay": 0.00004,
         "epsilon": 1e-8,
         "num_steps": 1000,
