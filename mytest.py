@@ -25,15 +25,15 @@ save_path = Path("C:/users/public/test_flip")
 if not save_path.is_dir():
     save_path.mkdir(parents=True, exist_ok=True)
 
-CROP = True
-HFLIP = True
-VFLIP = True
+CROP = False
+HFLIP = False
+VFLIP = False
 
 CROP_SIZE = (288, 384) if CROP else None
 flip = "vertical"
 assert flip in {"horizontal", "vertical"}
 
-provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=HFLIP, vflip=VFLIP, crop_size = CROP_SIZE)
+provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=HFLIP, vflip=VFLIP, crop_size = CROP_SIZE, type="warm_start")
 
 # flip_provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=flip=="horizontal", vflip=flip=="vertical", crop_size = None)
 
@@ -75,8 +75,8 @@ height, width = dataset.datasets[0].get_image_width_height()
 
 shape = None
 for idx, data in tqdm(enumerate(loader), total = len(loader)):
-    if idx == 0:
-        shape = data["event_volume_old"].shape        
+    print(type(data))
+    break        
 
     # Optical flow image
     flow_img, _ = visualize_optical_flow(data["flow_gt"].squeeze().numpy(), return_bgr=True)
@@ -93,8 +93,6 @@ for idx, data in tqdm(enumerate(loader), total = len(loader)):
     skimage.io.imsave(str(save_path / f"vis_{idx}.png"), vis.astype("uint8"))
 
     # c_sequence = torch.concatenate([sequence1, sequence2], dim = 1)
-
-print(shape)
 
 quit()
 

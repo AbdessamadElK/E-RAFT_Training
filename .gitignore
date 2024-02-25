@@ -10,3 +10,4 @@ build/
 checkpoints/*.tar
 checkpoints/*.pth
 !config/examples
+config/*
