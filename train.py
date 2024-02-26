@@ -127,7 +127,7 @@ class Logger:
         self.running_loss = {}
         self.sum_freq = sum_freq
 
-        savepath = Path(runs_save_dir) / f"run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+        savepath = Path(runs_save_dir) / f"{config["name"]}_{datetime.now().strftime('%Y_%m_%d')}"
         self.writer = SummaryWriter(str(savepath))
 
     def _print_training_status(self):
@@ -264,7 +264,7 @@ def train(config):
 
                     # Get validation results
                     results = {}
-                    results = evaluation.evaluate_dsec(model,
+                    results, vis_image = evaluation.evaluate_dsec(model,
                                                     data_loaders["validation"],
                                                     val_step = total_steps,
                                                     writer = writer,
@@ -273,6 +273,8 @@ def train(config):
                     for key, value in results.items():
                         assert key not in running_loss
                         writer.add_scalar(key, value, total_steps)
+
+                    writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
 
                     # results = {}
                     # for val_dataset in config.validation:

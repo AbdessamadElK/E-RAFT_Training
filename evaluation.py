@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 
 @torch.no_grad()
-def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWriter = None):
+def evaluate_dsec(model, val_loader, iters = 12, writer : SummaryWriter = None):
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
@@ -30,7 +30,9 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.cpu().view(-1).numpy())
 
-        if (not writer is None) and (idx == vis_idx):
+        vis_image = None
+
+        if idx == vis_idx:
             top_row_content = []
             bottom_row_content = []
 
@@ -56,12 +58,8 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
             # Build visualization image
             image_top_row = np.hstack(top_row_content)
             image_bottom_row = np.hstack(bottom_row_content)
-            image_matrix = np.vstack([image_top_row, image_bottom_row])
+            vis_image = np.vstack([image_top_row, image_bottom_row])
 
-            # Visualize
-            writer.add_image("Visualization", image_matrix, val_step, dataformats="HWC")
-
-    
     epe_all = np.concatenate(epe_list)
 
     results = {
@@ -71,4 +69,4 @@ def evaluate_dsec(model, val_loader, val_step, iters = 12, writer : SummaryWrite
         'val_5px': np.mean(epe_all < 5),
     }
 
-    return results
+    return results, vis_image
