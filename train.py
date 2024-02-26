@@ -127,7 +127,7 @@ class Logger:
         self.running_loss = {}
         self.sum_freq = sum_freq
 
-        savepath = Path(runs_save_dir) / f"{config["name"]}_{datetime.now().strftime('%Y_%m_%d')}"
+        savepath = Path(runs_save_dir) / f"run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
         self.writer = SummaryWriter(str(savepath))
 
     def _print_training_status(self):
@@ -200,7 +200,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter(f"C:/users/public/runs/run_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}")
+    writer = SummaryWriter(f"C:/users/public/runs/{config["name"]}_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}")
 
     total_steps = 0
     val_steps = 0
