@@ -272,7 +272,8 @@ def train(config):
                         assert key not in running_loss
                         writer.add_scalar(key, value, total_steps)
 
-                    writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
+                    if vis_image is not None:
+                        writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
 
                     # results = {}
                     # for val_dataset in config.validation:
