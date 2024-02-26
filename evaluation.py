@@ -8,7 +8,7 @@ import numpy as np
 from tqdm import tqdm
 
 @torch.no_grad()
-def evaluate_dsec(model, val_loader, iters = 12, writer : SummaryWriter = None):
+def evaluate_dsec(model, val_loader, iters = 12):
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 

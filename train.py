@@ -266,8 +266,6 @@ def train(config):
                     results = {}
                     results, vis_image = evaluation.evaluate_dsec(model,
                                                     data_loaders["validation"],
-                                                    val_step = total_steps,
-                                                    writer = writer,
                                                     iters=train_config["iters"])
 
                     for key, value in results.items():
