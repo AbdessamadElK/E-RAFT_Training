@@ -200,7 +200,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter(f"C:/users/public/runs/{config["name"]}_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}")
+    writer = SummaryWriter(f"C:/users/public/runs/{config['name']}_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}")
 
     total_steps = 0
     val_steps = 0
