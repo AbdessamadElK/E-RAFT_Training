@@ -12,8 +12,6 @@ def evaluate_dsec(model, val_loader, iters = 12):
     # Random visualization index
     vis_idx = np.random.randint(0, len(val_loader))
 
-    # vis_idx = 10 # for debugging
-
     epe_list = []
 
     for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating", leave=False):
@@ -32,7 +30,7 @@ def evaluate_dsec(model, val_loader, iters = 12):
 
         vis_image = None
 
-        if idx == vis_idx:
+        if idx == vis_idx and False:
             top_row_content = []
             bottom_row_content = []
 
@@ -69,4 +67,4 @@ def evaluate_dsec(model, val_loader, iters = 12):
         'val_5px': np.mean(epe_all < 5),
     }
 
-    return results, vis_image
+    return results

@@ -171,6 +171,7 @@ def train(config):
 
     sum_freq = config["validation"]["sum_freq"] 
     val_freq = config["validation"]["val_freq"]
+    vis_freq = config["validation"]["vis_freq"]
 
     model = nn.DataParallel(ERAFT(config, n_first_channels), device_ids=config["train"]["gpus"])
     print("Parameter Count: %d" % count_parameters(model))
@@ -264,7 +265,7 @@ def train(config):
 
                     # Get validation results
                     results = {}
-                    results, vis_image = evaluation.evaluate_dsec(model,
+                    results = evaluation.evaluate_dsec(model,
                                                     data_loaders["validation"],
                                                     iters=train_config["iters"])
 
@@ -272,8 +273,8 @@ def train(config):
                         assert key not in running_loss
                         writer.add_scalar(key, value, total_steps)
 
-                    if vis_image is not None:
-                        writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
+                    # if vis_image is not None:
+                    #     writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
 
                     # results = {}
                     # for val_dataset in config.validation:
@@ -292,23 +293,28 @@ def train(config):
                 
                     val_steps += 1
 
-            if total_steps % (VIS_FREQ + 1)  == 0 and False:
-                with torch.no_grad():
-                    # Visualize ground truth
+                if total_steps and total_steps % vis_freq == 0:
+                    # Visualize images
+                    vis_content = []
+
+                    # Ground truth
                     gt_image, _ = visualize_optical_flow(data_blob["flow_gt"].squeeze().numpy())
-                    writer.add_image("Ground truth", gt_image, total_steps, dataformats="HWC")
+                    vis_content.append(gt_image)
+                    # writer.add_image("Ground truth", gt_image, total_steps, dataformats="HWC")
 
-                    # Visualize prediction
+                    # Prediction
                     pred_image, _ = visualize_optical_flow(flow_predictions[-1].squeeze().cpu().numpy())
-                    writer.add_image("Prediction (unmasked)", pred_image, total_steps, dataformats="HWC")
+                    vis_content.append(pred_image)
+                    # writer.add_image("Prediction (unmasked)", pred_image, total_steps, dataformats="HWC")
 
-                    # Visualize masked prediction
+                    # Masked prediction
                     pred_image[~ data_blob["flow_valid"].squeeze()] = 0
-                    writer.add_image("Prediction", pred_image, total_steps, dataformats="HWC")
+                    vis_content.append(pred_image)
+                    # writer.add_image("Prediction", pred_image, total_steps, dataformats="HWC")
 
-                    # Also add metrics
-                    for key, value in metrics.items():
-                        writer.add_scalar(key, value, total_steps)
+                    # Visualize
+                    vis_image = np.hstack(vis_content)
+                    writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
 
             total_steps += 1
 
