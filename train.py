@@ -308,8 +308,8 @@ def train(config):
                     # writer.add_image("Prediction (unmasked)", pred_image, total_steps, dataformats="HWC")
 
                     # Masked prediction
-                    pred_image[~ data_blob["flow_valid"].squeeze()] = 0
-                    vis_content.append(pred_image)
+                    # pred_image[~ data_blob["flow_valid"].squeeze()] = 0
+                    # vis_content.append(pred_image)
                     # writer.add_image("Prediction", pred_image, total_steps, dataformats="HWC")
 
                     # Visualize

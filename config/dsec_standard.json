@@ -1,5 +1,5 @@
 {
-    "name": "visualization_test",
+    "name": "finetune_full_resolution_2",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -31,8 +31,8 @@
         "crop_size":null,
         "horizontal_filp": false,
         "vertical_flip": false,
-        "lr": 0.0001,
-        "epochs": 5,
+        "lr": 0.00001,
+        "epochs": 10,
         "batch_size": 1,
         "wdecay": 0.00004,
         "epsilon": 1e-8,
