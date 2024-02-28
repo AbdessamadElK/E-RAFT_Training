@@ -50,6 +50,8 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
 
     individual_results = [] if individual else None
 
+    model.eval()
+    debug = True
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
@@ -63,6 +65,11 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
         _, preds = model(volume_1, volume_2, iters)
         prediction = preds[-1]
 
+        if debug:
+            print(prediction.shape)
+            print(flow_gt.shape)
+            debug = False
+        
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.cpu().view(-1).numpy())
 
