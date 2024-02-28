@@ -92,7 +92,7 @@ if __name__ == "__main__":
     assert path.is_dir()
 
     model_file = Path(args.model)
-    assert model_file.is_dir()
+    assert model_file.is_file()
 
     split = args.split
     assert split in ["train", "validation", "test"]
