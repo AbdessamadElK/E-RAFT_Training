@@ -66,7 +66,7 @@ def data_to_video(args):
         savepath = Path(args.output) / name
 
         if not savepath.is_dir():
-                savepath.mkdir(parents = True, exist_ok = True)
+            savepath.mkdir(parents = True, exist_ok = True)
 
         savepath = savepath / VIDEO_FILE_TEMPLATE.format(name, data_label)
 

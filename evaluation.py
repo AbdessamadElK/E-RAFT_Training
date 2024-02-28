@@ -1,20 +1,51 @@
 import torch
-from torch.utils.tensorboard import SummaryWriter
+import torch.nn as nn
 
-from utils.visualization import events_to_event_image, visualize_optical_flow
+from model.eraft import ERAFT
 
 import numpy as np
 
 from tqdm import tqdm
+from tabulate import tabulate
+
+import json
+import csv
+
+from argparse import ArgumentParser
+
+from loader.loader_dsec import DatasetProvider
+from utils.dsec_utils import RepresentationType
+
+from torch.utils.data import DataLoader
+
+from pathlib import Path
 
 @torch.no_grad()
-def evaluate_dsec(model, val_loader, iters = 12):
+def get_epe_results(epe_list):
+    epe_all = np.concatenate(epe_list)
+
+    results = {
+        'epe': np.mean(epe_all),
+        '1px': np.mean(epe_all < 1),
+        '3px': np.mean(epe_all < 3),
+        '5px': np.mean(epe_all < 5),
+    }
+
+    return results
+
+@torch.no_grad()
+def evaluate_dsec(model, data_loader, iters = 12, individual = False):
     # Random visualization index
-    vis_idx = np.random.randint(0, len(val_loader))
 
     epe_list = []
+    epe_list_seq = []
 
-    for idx, data in tqdm(enumerate(val_loader), total=len(val_loader), desc="Evaluating", leave=False):
+    seq_idx = 0
+    seq_names = data_loader.name_mapper
+
+    individual_results = [] if individual else None
+
+    for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
         flow_gt = data["flow_gt"].cuda()
@@ -28,43 +59,87 @@ def evaluate_dsec(model, val_loader, iters = 12):
         epe = torch.sum((prediction - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.cpu().view(-1).numpy())
 
-        vis_image = None
+        if individual:
+            if data["name_map"] != seq_idx:
+                seq_results = get_epe_results(epe_list_seq)
+                seq_results["seq_name"] = seq_names[seq_idx]
+                individual_results.append(seq_results)
 
-        if idx == vis_idx and False:
-            top_row_content = []
-            bottom_row_content = []
+                epe_list_seq = []
+                seq_idx = data["name_map"]
 
-            # Prediction image
-            pred_img, _ = visualize_optical_flow(prediction.cpu().squeeze().numpy(), return_bgr=True)
-            bottom_row_content.append(pred_img)
+            epe_list_seq.append(epe.cpu().view(-1).numpy())
 
-            # Ground truth optical flow image
-            flow_img, _ = visualize_optical_flow(flow_gt.cpu().squeeze().numpy(), return_bgr=True)
-            bottom_row_content.append(flow_img)
-            height, width, _ = flow_img.shape
+    results = get_epe_results(epe_list)
 
-            # Image data
-            image = data["image"].squeeze().numpy().transpose(1, 2, 0)
-            top_row_content.append(image / 255)
+    return results, individual_results
 
-            # Events as image
-            event_sequence = data["raw_events_old"]
-            event_img = events_to_event_image(event_sequence.squeeze().numpy(), height, width)
-            event_img = event_img.numpy().transpose(1, 2, 0)
-            top_row_content.append(event_img / 255)
 
-            # Build visualization image
-            image_top_row = np.hstack(top_row_content)
-            image_bottom_row = np.hstack(bottom_row_content)
-            vis_image = np.vstack([image_top_row, image_bottom_row])
+if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("-m", "--model", type=str, help="Saved model file (.pth)")
+    parser.add_argument("-d", "--dataset", type=str, help="Dataset directory path")
+    parser.add_argument("-s", "--split", type=str, help="Data split to evaluate on [train/validation/test]")
+    parser.add_argument("-c", "--config", type=str, help="Config file path")
+    parser.add_argument("-n", "--num_iters", type=int, default=12, help="Number of iterations")
+    parser.add_argument("-i", "--individual", action="store_true", help="Return results for each sequence")
 
-    epe_all = np.concatenate(epe_list)
+    args = parser.parse_args()
 
-    results = {
-        'val_epe': np.mean(epe_all),
-        'val_1px': np.mean(epe_all < 1),
-        'val_3px': np.mean(epe_all < 3),
-        'val_5px': np.mean(epe_all < 5),
-    }
+    config = json.load(open(args.config))
 
-    return results
+    path = Path(args.dataset)
+    assert path.is_dir()
+
+    model_file = Path(args.model)
+    assert model_file.is_dir()
+
+    split = args.split
+    assert split in ["train", "validation", "test"]
+
+    # Dataloader
+    provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL)
+    data_loader = DataLoader(provider.get_dataset())
+
+    # Model
+    n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
+    model = nn.DataParallel(ERAFT(config, n_first_channels), device_ids=config["train"]["gpus"])
+
+    model.load_state_dict(torch.load(model_file), strict=False)
+
+    model_name = model_file.name.split(".")[0]
+
+    # Evaluation
+    print(f'Evaluating "{model_name}" on the {split} split of DSEC Dataset:')
+    results, individual_results = evaluate_dsec(model, data_loader, iters=args.num_iters, individual=args.individual)
+
+    # Displaying results
+    print("\nResults:\n\n")
+
+    if not args.individual:
+        for key in results:
+            print(key, ":", results[key])
+    else:
+        # Savepath
+        savepath = Path(f"./results")
+        savepath.mkdir(parents = True, exist_ok = True)
+        savepath = savepath / f"{model_name}_{split}.csv"
+
+        # Also add total results
+        results["seq_name"] = "All"
+        individual_results.insert(0, results)
+
+        # Write CSV file
+        LABELS = ["seq_name", "epe", "1px", "3px", "5px"]
+        table = []
+        with open(savepath, "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(LABELS)
+            for result in individual_results:
+                items = sorted(result.items, lambda it : LABELS.index(it[0]))
+                values = [item[1] for item in items]
+                table.append(values)
+                writer.writerow(values)
+
+        # Display results on the console
+        print(tabulate(table, headers=LABELS))
