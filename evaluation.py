@@ -138,7 +138,7 @@ if __name__ == "__main__":
             writer = csv.writer(f)
             writer.writerow(LABELS)
             for result in individual_results:
-                items = sorted(result.items, lambda it : LABELS.index(it[0]))
+                items = sorted(result.items, key = lambda it : LABELS.index(it[0]))
                 values = [item[1] for item in items]
                 table.append(values)
                 writer.writerow(values)
