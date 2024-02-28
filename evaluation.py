@@ -34,14 +34,14 @@ def get_epe_results(epe_list):
     return results
 
 @torch.no_grad()
-def evaluate_dsec(model, data_loader, iters = 12, individual = False):
-    # Random visualization index
+def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
+    data_loader = DataLoader(dataset_provider.get_dataset())
 
     epe_list = []
     epe_list_seq = []
 
     seq_idx = 0
-    seq_names = data_loader.name_mapper
+    seq_names = dataset_provider.name_mapper
 
     individual_results = [] if individual else None
 
@@ -97,9 +97,8 @@ if __name__ == "__main__":
     split = args.split
     assert split in ["train", "validation", "test"]
 
-    # Dataloader
+    # Dataset provider
     provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL)
-    data_loader = DataLoader(provider.get_dataset())
 
     # Model
     n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
@@ -111,7 +110,7 @@ if __name__ == "__main__":
 
     # Evaluation
     print(f'Evaluating "{model_name}" on the {split} split of DSEC Dataset:')
-    results, individual_results = evaluate_dsec(model, data_loader, iters=args.num_iters, individual=args.individual)
+    results, individual_results = evaluate_dsec(model, provider, iters=args.num_iters, individual=args.individual)
 
     # Displaying results
     print("\nResults:\n\n")
