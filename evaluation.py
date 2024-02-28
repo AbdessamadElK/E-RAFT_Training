@@ -36,6 +36,8 @@ def get_epe_results(epe_list):
 
     return results
 
+MAX_FLOW  = 400
+
 @torch.no_grad()
 def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
     data_loader = DataLoader(dataset_provider.get_dataset())
@@ -54,7 +56,9 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
         flow_gt = data["flow_gt"].cuda()
         valid = data["flow_valid"].cuda()
 
-        valid = valid >= 0.5
+        mag = torch.sum(flow_gt**2, dim=1).sqrt()
+
+        valid = (valid >= 0.5) & (mag < MAX_FLOW)
 
         _, preds = model(volume_1, volume_2, iters)
         prediction = preds[-1]
