@@ -20,6 +20,9 @@ from torch.utils.data import DataLoader
 
 from pathlib import Path
 
+import warnings
+warnings.filterwarnings("ignore")
+
 @torch.no_grad()
 def get_epe_results(epe_list):
     epe_all = np.concatenate(epe_list)
