@@ -385,7 +385,7 @@ class Sequence(Dataset):
         output = dict()
         output['name_map']=self.name_idx
 
-        assert index < len(self.timestamps_flow)
+        assert index < len(self.timestamps_flow) - 1
 
         if self.mode == "test":
             # Start and End times of the flow subsequences
@@ -402,9 +402,16 @@ class Sequence(Dataset):
         
         else:
             # Start and End times of the flow subsequences
+            # t0, t1 = self.timestamps_flow[index]
+            # ts_start = [t0, (t0+t1)//2]
+            # ts_end = [(t0+t1)//2, t1]
+
+            # We take two timewindows instead of just spliting one
             t0, t1 = self.timestamps_flow[index]
-            ts_start = [t0, (t0+t1)//2]
-            ts_end = [(t0+t1)//2, t1]
+            _, t2 = self.timestamps_flow[index + 1]
+
+            ts_start = [t0, t1]
+            ts_end = [t1, t2]
 
             # Timestamp
             output['timestamp'] = self.timestamps_flow[index]
