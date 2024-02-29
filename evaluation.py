@@ -55,8 +55,8 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
-        flow_gt = data["flow_gt"].cuda().squeeze()
-        valid = data["flow_valid"].cuda().squeeze()
+        flow_gt = data["flow_gt"].squeeze()
+        valid = data["flow_valid"].squeeze()
 
         mag = torch.sum(flow_gt**2, dim=0).sqrt()
 
@@ -70,8 +70,8 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
             print(flow_gt.shape)
             debug = False
         
-        epe = torch.sum((prediction - flow_gt)**2, dim=0).sqrt()
-        epe_list.append(epe.cpu().view(-1).numpy())
+        epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
+        epe_list.append(epe.view(-1).numpy())
 
         if individual:
             if data["name_map"] != seq_idx:
@@ -86,7 +86,7 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
 
     results = get_epe_results(epe_list)
 
-    return results, individual_results
+    return results, individual_results, epe_list
 
 
 if __name__ == "__main__":
@@ -124,7 +124,7 @@ if __name__ == "__main__":
 
     # Evaluation
     print(f'Evaluating "{model_name}" on the {split} split of DSEC Dataset:')
-    results, individual_results = evaluate_dsec(model, provider, iters=args.num_iters, individual=args.individual)
+    results, individual_results, epe_list = evaluate_dsec(model, provider, iters=args.num_iters, individual=args.individual)
 
     # Displaying results
     print("\nResults:\n\n")
@@ -153,6 +153,12 @@ if __name__ == "__main__":
                 values = [item[1] for item in items]
                 table.append(values)
                 writer.writerow(values)
+
+        with open("./epe_list.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(["EPE"])
+            for epe in epe_list:
+                writer.writerow([epe])
 
         # Display results on the console
         print(tabulate(table, headers=LABELS))
