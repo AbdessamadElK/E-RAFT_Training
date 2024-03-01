@@ -24,29 +24,25 @@ import warnings
 warnings.filterwarnings("ignore")
 
 @torch.no_grad()
-def get_epe_results(epe_list):
+def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
     epe_all = np.concatenate(epe_list)
 
-    results = {
-        'epe': np.mean(epe_all),
-        '1px': np.mean(epe_all < 1),
-        '3px': np.mean(epe_all < 3),
-        '5px': np.mean(epe_all < 5),
-    }
+    results = {'epe': np.mean(epe_all),}
+
+    for n in px_metrics:
+        result[f'{n}px'] = np.mean(epe_all < n)
 
     return results
 
 MAX_FLOW  = 400
 
 @torch.no_grad()
-def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
-    data_loader = DataLoader(dataset_provider.get_dataset())
+def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names = None):
 
     epe_list = []
     epe_list_seq = []
 
     seq_idx = 0
-    seq_names = dataset_provider.name_mapper
 
     individual_results = [] if individual else None
 
@@ -76,7 +72,10 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
         if individual:
             if data["name_map"] != seq_idx:
                 seq_results = get_epe_results(epe_list_seq)
-                seq_results["seq_name"] = seq_names[seq_idx]
+                if seq_names is not None:
+                    seq_results["seq_name"] = seq_names[seq_idx]
+                else:
+                    seq_results["seq_name"] = f"Sequence_{seq_idx + 1}"
                 individual_results.append(seq_results)
 
                 epe_list_seq = []
@@ -111,8 +110,9 @@ if __name__ == "__main__":
     split = args.split
     assert split in ["train", "validation", "test"]
 
-    # Dataset provider
+    # Dataloader
     provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL)
+    data_loader = DataLoader(provider.get_dataset())
 
     # Model
     n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
@@ -124,7 +124,11 @@ if __name__ == "__main__":
 
     # Evaluation
     print(f'Evaluating "{model_name}" on the {split} split of DSEC Dataset:')
-    results, individual_results = evaluate_dsec(model, provider, iters=args.num_iters, individual=args.individual)
+    results, individual_results = evaluate_dsec(model,
+                                                data_loader,
+                                                iters=args.num_iters,
+                                                individual=args.individual,
+                                                seq_names=provider.name_mapper)
 
     # Displaying results
     print("\nResults:\n\n")

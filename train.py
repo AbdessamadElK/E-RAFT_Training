@@ -215,7 +215,7 @@ def train(config):
 
     for epoch in range(epochs):
         # description = "[Step {} / {}]".format(total_steps + 1, train_config["num_steps"])
-
+        epe_list = []
         for data_blob in tqdm(data_loaders["train"], desc="[Epoch {}/{}] ".format(epoch+1, epochs)):
             optimizer.zero_grad()
 
@@ -246,6 +246,10 @@ def train(config):
             # logger.push(metrics)
 
             with torch.no_grad():
+                # Update EPE list for later validation
+                epe_list.append(metrics["epe"])
+
+
                 # Update the running loss
                 for key, value in metrics.items():
                     if not key in running_loss:
@@ -259,39 +263,6 @@ def train(config):
                         writer.add_scalar(key, value / sum_freq, total_steps)
                         running_loss[key] = 0.0
 
-                if total_steps and total_steps % val_freq == 0:
-                    PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
-                    torch.save(model.state_dict(), PATH)
-
-                    # Get validation results
-                    results = {}
-                    results = evaluation.evaluate_dsec(model,
-                                                    data_loaders["validation"],
-                                                    iters=train_config["iters"])
-
-                    for key, value in results.items():
-                        assert key not in running_loss
-                        writer.add_scalar(key, value, total_steps)
-
-                    # if vis_image is not None:
-                    #     writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
-
-                    # results = {}
-                    # for val_dataset in config.validation:
-                    #     if val_dataset == 'chairs':
-                    #         results.update(evaluate.validate_chairs(model.module))
-                    #     elif val_dataset == 'sintel':
-                    #         results.update(evaluate.validate_sintel(model.module))
-                    #     elif val_dataset == 'kitti':
-                    #         results.update(evaluate.validate_kitti(model.module))
-
-                    # logger.write_dict(results)
-                    
-                    model.train()
-                    if config["stage"] != 'chairs':
-                        model.module.freeze_bn()
-                
-                    val_steps += 1
 
                 if total_steps and total_steps % vis_freq == 0:
                     # Visualize images
@@ -315,8 +286,29 @@ def train(config):
                     # Visualize
                     vis_image = np.hstack(vis_content)
                     writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")
-
+                
             total_steps += 1
+
+        # Validate at the end of each epoch
+        PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
+        torch.save(model.state_dict(), PATH)
+
+        # Get validation results
+        results, _ = evaluation.evaluate_dsec(model,
+                                        data_loaders["validation"],
+                                        iters=train_config["iters"])
+
+        writer.add_scalars("Validation Metrics", results, epoch+1)
+
+        writer.add_scalars("Epoch EPE",
+                           {"Train" : np.mean(epe_list), "Validation" : results["epe"]},
+                           epoch+1)
+        
+        model.train()
+        # if config["stage"] != 'chairs':
+        #     model.module.freeze_bn()
+
+            
 
     # logger.close()
     writer.close()
