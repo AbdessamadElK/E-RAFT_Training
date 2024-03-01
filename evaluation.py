@@ -30,7 +30,7 @@ def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
     results = {'epe': np.mean(epe_all),}
 
     for n in px_metrics:
-        result[f'{n}px'] = np.mean(epe_all < n)
+        results[f'{n}px'] = np.mean(epe_all < n)
 
     return results
 
@@ -47,7 +47,6 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
     individual_results = [] if individual else None
 
     model.eval()
-    debug = True
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
@@ -61,11 +60,6 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
         _, preds = model(volume_1, volume_2, iters)
         prediction = preds[-1].squeeze()
 
-        if debug:
-            print(prediction.shape)
-            print(flow_gt.shape)
-            debug = False
-        
         epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1).numpy())
 
