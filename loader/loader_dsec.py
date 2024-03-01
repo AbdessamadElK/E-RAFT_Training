@@ -365,7 +365,7 @@ class Sequence(Dataset):
         return self.height, self.width
 
     def __len__(self):
-        return len(self.timestamps_flow)
+        return len(self.timestamps_flow) - 1
 
     def rectify_events(self, x: np.ndarray, y: np.ndarray):
         # assert location in self.locations

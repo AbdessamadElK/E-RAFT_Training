@@ -265,13 +265,13 @@ def train(config):
 
                     # Get validation results
                     results = {}
-                    results = evaluation.evaluate_dsec(model,
+                    results, _ = evaluation.evaluate_dsec(model,
                                                     data_loaders["validation"],
                                                     iters=train_config["iters"])
 
                     for key, value in results.items():
                         assert key not in running_loss
-                        writer.add_scalar(key, value, total_steps)
+                        writer.add_scalar("val_" + key, value, total_steps)
 
                     # if vis_image is not None:
                     #     writer.add_image("Visualization", vis_image, total_steps, dataformats="HWC")

@@ -39,19 +39,17 @@ def get_epe_results(epe_list):
 MAX_FLOW  = 400
 
 @torch.no_grad()
-def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
-    data_loader = DataLoader(dataset_provider.get_dataset())
+def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names = None):
 
     epe_list = []
     epe_list_seq = []
 
     seq_idx = 0
-    seq_names = dataset_provider.name_mapper
 
     individual_results = [] if individual else None
 
     model.eval()
-    debug = True
+
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
@@ -64,11 +62,6 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
 
         _, preds = model(volume_1, volume_2, iters)
         prediction = preds[-1].squeeze()
-
-        if debug:
-            print(prediction.shape)
-            print(flow_gt.shape)
-            debug = False
         
         epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1).numpy())
@@ -76,7 +69,11 @@ def evaluate_dsec(model, dataset_provider, iters = 12, individual = False):
         if individual:
             if data["name_map"] != seq_idx:
                 seq_results = get_epe_results(epe_list_seq)
-                seq_results["seq_name"] = seq_names[seq_idx]
+                if seq_names is not None:
+                    seq_results["seq_name"] = seq_names[seq_idx]
+                else:
+                    seq_results["seq_name"] = f"Sequence_{seq_idx + 1}"
+                    pass
                 individual_results.append(seq_results)
 
                 epe_list_seq = []
@@ -113,6 +110,7 @@ if __name__ == "__main__":
 
     # Dataset provider
     provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL)
+    data_loader = DataLoader(provider.get_dataset())
 
     # Model
     n_first_channels = config["data_loader"]["train"]["args"]["num_voxel_bins"]
@@ -124,7 +122,11 @@ if __name__ == "__main__":
 
     # Evaluation
     print(f'Evaluating "{model_name}" on the {split} split of DSEC Dataset:')
-    results, individual_results = evaluate_dsec(model, provider, iters=args.num_iters, individual=args.individual)
+    results, individual_results = evaluate_dsec(model,
+                                                data_loader,
+                                                iters=args.num_iters,
+                                                individual=args.individual,
+                                                seq_names = provider.name_mapper)
 
     # Displaying results
     print("\nResults:\n\n")
