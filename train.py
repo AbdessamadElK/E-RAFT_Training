@@ -201,7 +201,7 @@ def train(config):
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
-    writer = SummaryWriter(f"C:/users/public/runs/{config['name']}_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}")
+    writer = SummaryWriter(f"C:/users/public/runs/{datetime.now().strftime('%Y_%m_%d_%H%M%S')}_{config['name']}")
 
     total_steps = 0
     val_steps = 0
@@ -240,7 +240,7 @@ def train(config):
             torch.nn.utils.clip_grad_norm_(model.parameters(), train_config["clip"])
             
             scaler.step(optimizer)
-            scheduler.step()
+            # scheduler.step()
             scaler.update()
 
             # logger.push(metrics)
@@ -298,12 +298,11 @@ def train(config):
                                         data_loaders["validation"],
                                         iters=train_config["iters"])
 
-        writer.add_scalars("Validation Metrics", results, epoch+1)
+        for key in results:
+            writer.add_scalar(f"Val_{key}", results[key], epoch+1)
 
-        writer.add_scalars("Epoch EPE",
-                           {"Train" : np.mean(epe_list), "Validation" : results["epe"]},
-                           epoch+1)
-        
+        writer.add_sclar("Epoch EPE", np.mean(epe_list), epoch+1)
+
         model.train()
         # if config["stage"] != 'chairs':
         #     model.module.freeze_bn()

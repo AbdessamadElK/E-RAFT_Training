@@ -1,5 +1,5 @@
 {
-    "name": "new_training",
+    "name": "no_scheduler",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -28,11 +28,11 @@
     "train": {
         "restore_ckpt": "checkpoints/first_training.pth",
         "gpus": [0],
-        "crop_size":null,
-        "horizontal_filp": false,
+        "crop_size":[288, 384],
+        "horizontal_filp": true,
         "vertical_flip": false,
         "lr": 0.0001,
-        "epochs": 50,
+        "epochs": 40,
         "batch_size": 1,
         "wdecay": 0.00004,
         "epsilon": 1e-8,
