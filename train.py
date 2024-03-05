@@ -301,7 +301,7 @@ def train(config):
         for key in results:
             writer.add_scalar(f"Val_{key}", results[key], epoch+1)
 
-        writer.add_sclar("Epoch EPE", np.mean(epe_list), epoch+1)
+        writer.add_scalar("Epoch EPE", np.mean(epe_list), epoch+1)
 
         model.train()
         # if config["stage"] != 'chairs':
