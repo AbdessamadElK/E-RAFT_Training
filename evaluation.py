@@ -61,7 +61,7 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
         prediction = preds[-1].squeeze()
 
         epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
-        epe_list.append(epe.view(-1).numpy())
+        epe_list.append(epe.view(-1)[valid.view(-1)])
 
         if individual:
             if data["name_map"] != seq_idx:
