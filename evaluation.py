@@ -75,7 +75,7 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
                 epe_list_seq = []
                 seq_idx = data["name_map"]
 
-            epe_list_seq.append(epe.cpu().view(-1).numpy())
+            epe_list_seq.append(epe.cpu().view(-1)[valid.view(-1)])
 
     results = get_epe_results(epe_list)
 
