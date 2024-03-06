@@ -105,7 +105,7 @@ if __name__ == "__main__":
     assert split in ["train", "validation", "test"]
 
     # Dataloader
-    provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL)
+    provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL, crop_size=[288, 384])
     data_loader = DataLoader(provider.get_dataset())
 
     # Model
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         # Savepath
         savepath = Path(f"./results")
         savepath.mkdir(parents = True, exist_ok = True)
-        savepath = savepath / f"{model_name}_{split}.csv"
+        savepath = savepath / f"{model_name}_{split}_crop.csv"
 
         # Also add total results
         results["seq_name"] = "All"

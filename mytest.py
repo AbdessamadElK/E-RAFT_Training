@@ -21,32 +21,53 @@ from tqdm import tqdm
 import numpy as np
 
 dsec_path = Path("C:/users/public/dsec_flow")
-save_path = Path("C:/users/public/test_flip")
-if not save_path.is_dir():
-    save_path.mkdir(parents=True, exist_ok=True)
+save_path_root = Path("C:/users/public")
 
-CROP = False
-HFLIP = False
+CROP = True
+HFLIP = True
 VFLIP = False
 
 CROP_SIZE = (288, 384) if CROP else None
-flip = "vertical"
+flip = "horizontal"
 assert flip in {"horizontal", "vertical"}
 
-provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=HFLIP, vflip=VFLIP, crop_size = CROP_SIZE, type="warm_start")
 
-# flip_provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=flip=="horizontal", vflip=flip=="vertical", crop_size = None)
+provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=False, vflip=False, crop_size = None)
+flip_provider = DatasetProvider(dsec_path, RepresentationType.VOXEL, mode = "train", load_raw_events=True, hflip=False, vflip=False, crop_size = [288, 384])
 
-sequence_names = provider.name_mapper
+providers = [provider, flip_provider]
+vis_path_names = ["vis_no_flip", "vis_flip"]
+sequence_names = provider.name_mapper   
 
-loader = DataLoader(provider.get_dataset(), batch_size= 1, shuffle=False)
-# flip_loader = DataLoader(flip_provider.get_dataset(), batch_size=1, shuffle=False)
+for provider, path_name in zip(providers, vis_path_names):
+    if path_name == "vis_no_flip":
+        continue
+    save_path = save_path_root / path_name
+    save_path.mkdir(parents=True, exist_ok=True)
 
-dataset = provider.get_dataset()
-# flip_dataset = flip_provider.get_dataset()
+    dataset = provider.get_dataset()
+    loader = DataLoader(dataset, batch_size= 1, shuffle=False)
 
-height, width = dataset.datasets[0].get_image_width_height()
+    height, width = dataset.datasets[0].get_image_width_height()
 
+    for idx, data in tqdm(enumerate(loader), total = len(loader)):      
+        # Optical flow image
+        flow_img, _ = visualize_optical_flow(data["flow_gt"].squeeze().numpy(), return_bgr=True)
+        flow_img = flow_img * 255
+        height, width, _ = flow_img.shape
+
+        # Events as image
+        event_sequence = data["raw_events_old"]
+        event_img = events_to_event_image(event_sequence.squeeze().numpy(), height, width)
+        event_img = event_img.numpy().transpose(1, 2, 0)
+
+        vis = np.hstack([event_img, flow_img])
+        vis = flow_img
+        skimage.io.imsave(str(save_path / f"vis_{idx}.png"), vis.astype("uint8"))
+
+        # c_sequence = torch.concatenate([sequence1, sequence2], dim = 1)
+
+quit()
 # for i in range(len(dataset)):
 #     data = dataset.__getitem__(i)
 #     data_flip = flip_dataset.__getitem__(i)
@@ -74,27 +95,6 @@ height, width = dataset.datasets[0].get_image_width_height()
 #     skimage.io.imsave(str(save_path / f"vis_{i}.png"), vis.astype("uint8"))
 
 shape = None
-for idx, data in tqdm(enumerate(loader), total = len(loader)):
-    print(type(data))
-    break        
-
-    # Optical flow image
-    flow_img, _ = visualize_optical_flow(data["flow_gt"].squeeze().numpy(), return_bgr=True)
-    flow_img = flow_img * 255
-    height, width, _ = flow_img.shape
-
-    # Events as image
-    event_sequence = data["raw_events_old"]
-    event_img = events_to_event_image(event_sequence.squeeze().numpy(), height, width)
-    event_img = event_img.numpy().transpose(1, 2, 0)
-
-    vis = np.hstack([event_img, flow_img])
-
-    skimage.io.imsave(str(save_path / f"vis_{idx}.png"), vis.astype("uint8"))
-
-    # c_sequence = torch.concatenate([sequence1, sequence2], dim = 1)
-
-quit()
 
 
 config = json.load(open("./config/dsec_standard.json"))
