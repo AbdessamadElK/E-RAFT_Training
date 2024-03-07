@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("-i", "--individual", action="store_true", help="Return results for each sequence")
     parser.add_argument("-f", "--horizontal_flip", action="store_true", help="Activate horizontal flipping")
     parser.add_argument("-v", "--vertical_flip", action="store_true", help="Activate vertical flipping")
-    parser.parse_args("-h", "--crop_height", type=int, default=-1, help="Crop height (default = -1 means no crop)")
+    parser.add_argument("-h", "--crop_height", type=int, default=-1, help="Crop height (default = -1 means no crop)")
     parser.add_argument("-w", "--crop_width", type=int, default=-1, help="Crop width (default = -1 means no crop)")
     
     args = parser.parse_args()
