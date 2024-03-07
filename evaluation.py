@@ -98,8 +98,10 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str, help="Config file path")
     parser.add_argument("-n", "--num_iters", type=int, default=12, help="Number of iterations")
     parser.add_argument("-i", "--individual", action="store_true", help="Return results for each sequence")
-
-    args = parser.parse_args()
+    parser.add_argument("-h", "--horizontal_flip", action="store_true", help="Activate horizontal flipping")
+    parser.add_argument("-v", "--vertical_flip", action="store_true", help="Activate vertical flipping")
+    parser.add_argument("-w", "--crop_width", type=int, default=-1, help="Crop width (default = -1 means no crop)")
+    args = parser.parse_args("-h", "--crop_height", type=int, default=-1, help="Crop height (default = -1 means no crop)")
 
     config = json.load(open(args.config))
 
@@ -112,8 +114,20 @@ if __name__ == "__main__":
     split = args.split
     assert split in ["train", "validation", "test"]
 
+    # Handle crop size
+    if args.crop_width <= 0 or args.crop_height <= 0:
+        crop_size = None
+    else:
+        crop_size = [args.crop_height, args.crop_width]
+
     # Dataloader
-    provider = DatasetProvider(path, mode = split, representation_type=RepresentationType.VOXEL, crop_size=[288, 384])
+    provider = DatasetProvider(path,
+                               mode = split,
+                               representation_type=RepresentationType.VOXEL,
+                               crop_size=crop_size,
+                               hflip=args.horizontal_flip,
+                               vflip=args.vertical_flip)
+    
     data_loader = DataLoader(provider.get_dataset())
 
     # Model
