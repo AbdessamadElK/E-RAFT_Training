@@ -25,12 +25,20 @@ warnings.filterwarnings("ignore")
 
 @torch.no_grad()
 def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
-    epe_all = np.concatenate(epe_list)
+    results = {}
+    for epe in epe_list:
+        if not "epe" in results:
+            results["epe"] = 0
+        results["epe"] += epe.mean().item()
 
-    results = {'epe': np.mean(epe_all),}
-
-    for n in px_metrics:
-        results[f'{n}px'] = np.mean(epe_all < n)
+        for n in px_metrics:
+            key = f'{n}px'
+            if not key in results:
+                results[key] = 0
+            results[key] += (epe < 1).float().mean().item()
+    
+    for key in results:
+        results[key] = np.mean(results[key])
 
     return results
 
