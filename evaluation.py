@@ -38,7 +38,7 @@ def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
             results[key] += (epe < 1).float().mean().item()
     
     for key in results:
-        results[key] = np.mean(results[key])
+        results[key] = results[key] / len(epe_list)
 
     return results
 
