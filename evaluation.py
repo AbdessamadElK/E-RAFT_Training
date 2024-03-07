@@ -29,15 +29,19 @@ def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
     for epe in epe_list:
         if not "epe" in results:
             results["epe"] = 0
+
+        # Accumulate the Average EPE for each estimate
         results["epe"] += epe.mean().item()
 
         for n in px_metrics:
+            # Also inlclude npx metrics
             key = f'{n}px'
             if not key in results:
                 results[key] = 0
-            results[key] += (epe < 1).float().mean().item()
+            results[key] += (epe < n).float().mean().item()
     
     for key in results:
+        # Calculate the mean of each metric
         results[key] = results[key] / len(epe_list)
 
     return results
@@ -58,17 +62,17 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
-        flow_gt = data["flow_gt"].squeeze()
-        valid = data["flow_valid"].squeeze()
+        flow_gt = data["flow_gt"]
+        valid = data["flow_valid"]
 
         mag = torch.sum(flow_gt**2, dim=0).sqrt()
 
         valid = (valid >= 0.5) & (mag < MAX_FLOW)
 
         _, preds = model(volume_1, volume_2, iters)
-        prediction = preds[-1].squeeze()
+        prediction = preds[-1]
 
-        epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
+        epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=1).sqrt()
         epe_list.append(epe.view(-1)[valid.view(-1)])
 
         if individual:
