@@ -62,17 +62,21 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()
-        flow_gt = data["flow_gt"]
-        valid = data["flow_valid"]
+        flow_gt = data["flow_gt"].squeeze()
+        valid = data["flow_valid"].squeeze()
 
         mag = torch.sum(flow_gt**2, dim=0).sqrt()
 
         valid = (valid >= 0.5) & (mag < MAX_FLOW)
 
         _, preds = model(volume_1, volume_2, iters)
-        prediction = preds[-1]
+        prediction = preds[-1].squeeze()
 
-        epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=1).sqrt()
+        print("prediction :", prediction.shape)
+        print("flow gt :", flow_gt.shape)
+        print("valid :", valid.shape)
+
+        epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1)[valid.view(-1)])
 
         if individual:
