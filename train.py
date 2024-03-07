@@ -74,7 +74,6 @@ VIS_FREQ = 50
 
 def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
     """ Loss function defined over sequence of flow predictions """
-
     n_predictions = len(flow_preds)    
     flow_loss = 0.0
 
@@ -88,7 +87,7 @@ def sequence_loss(flow_preds, flow_gt, valid, gamma=0.8, max_flow=MAX_FLOW):
         i_loss = (flow_preds[i] - flow_gt).abs()
         flow_loss += i_weight * (valid[:, None] * i_loss).mean()
 
-    epe = torch.sum((flow_preds[-1] - flow_gt)**2, dim=1).sqrt()
+    epe = torch.sum((flow_preds[-1].squeeze() - flow_gt.squeeze())**2, dim=0).sqrt()
     epe = epe.view(-1)[valid.view(-1)]
 
     metrics = {

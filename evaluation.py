@@ -72,10 +72,6 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
         _, preds = model(volume_1, volume_2, iters)
         prediction = preds[-1].squeeze()
 
-        print("prediction :", prediction.shape)
-        print("flow gt :", flow_gt.shape)
-        print("valid :", valid.shape)
-
         epe = torch.sum((prediction.cpu() - flow_gt)**2, dim=0).sqrt()
         epe_list.append(epe.view(-1)[valid.view(-1)])
 
