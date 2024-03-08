@@ -1,5 +1,5 @@
 {
-    "name": "valid_test",
+    "name": "new_training",
     "stage": "dsec",
     "path":"C:/users/public/DSEC_flow",
     "cuda": false,
@@ -26,13 +26,13 @@
         "checkpoint": "checkpoints/dsec.tar"
     },
     "train": {
-        "restore_ckpt": "checkpoints/first_training.pth",
+        "restore_ckpt": null,
         "gpus": [0],
         "crop_size":[288, 384],
         "horizontal_flip": true,
         "vertical_flip": false,
         "lr": 0.0001,
-        "epochs": 20,
+        "epochs": 40,
         "batch_size": 1,
         "wdecay": 0.00004,
         "epsilon": 1e-8,
