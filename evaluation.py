@@ -26,24 +26,10 @@ warnings.filterwarnings("ignore")
 @torch.no_grad()
 def get_epe_results(epe_list, px_metrics:list = [1, 3, 5]):
     results = {}
-    for epe in epe_list:
-        if not "epe" in results:
-            results["epe"] = 0
-
-        # Accumulate the Average EPE for each estimate
-        results["epe"] += epe.mean().item()
-
-        for n in px_metrics:
-            # Also inlclude npx metrics
-            key = f'{n}px'
-            if not key in results:
-                results[key] = 0
-            results[key] += (epe < n).float().mean().item()
-    
-    for key in results:
-        # Calculate the mean of each metric
-        results[key] = results[key] / len(epe_list)
-
+    epe_all = torch.cat(epe_list)
+    results["epe"] = epe_all.mean().item()
+    for n in px_metrics:
+        results[f'{n}px'] = (epe_all < n).float().mean().item()
     return results
 
 MAX_FLOW  = 400
@@ -101,6 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--config", type=str, help="Config file path")
     parser.add_argument("-n", "--num_iters", type=int, default=12, help="Number of iterations")
     parser.add_argument("-i", "--individual", action="store_true", help="Return results for each sequence")
+    parser.add_argument("-a", "--augmentation", action="store_true", help="Activate data augmentation (defined in the config file)")
     
     args = parser.parse_args()
     config = json.load(open(args.config))
@@ -118,9 +105,9 @@ if __name__ == "__main__":
     provider = DatasetProvider(path,
                                mode = split,
                                representation_type=RepresentationType.VOXEL,
-                               crop_size=config["train"]["crop_size"],
-                               hflip=config["train"]["horizontal_flip"],
-                               vflip=config["train"]["vertical_flip"])
+                               crop_size=config["train"]["crop_size"] if args.augmentation else None,
+                               hflip=config["train"]["horizontal_flip"] and args.augmentation,
+                               vflip=config["train"]["vertical_flip"] and args.augmentation)
     
     data_loader = DataLoader(provider.get_dataset())
 

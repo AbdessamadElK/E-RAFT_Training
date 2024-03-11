@@ -189,8 +189,8 @@ def train(config):
         provider = DatasetProvider(Path(config["path"]),
                                    mode = mode,
                                    crop_size = train_config["crop_size"],
-                                   hflip = train_config["horizontal_flip"] and mode == "train",
-                                   vflip = train_config["vertical_flip"] and mode == "train", 
+                                   hflip = train_config["horizontal_flip"],
+                                   vflip = train_config["vertical_flip"], 
                                    representation_type = RepresentationType.VOXEL)
         loader = DataLoader(provider.get_dataset())
         data_loaders[mode] = loader
