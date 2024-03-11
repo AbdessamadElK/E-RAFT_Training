@@ -58,7 +58,6 @@ def evaluate_dsec(model, data_loader, iters = 12, individual = False, seq_names 
 
     individual_results = [] if individual else None
 
-    model.eval()
     for data in tqdm(data_loader, total=len(data_loader), desc="Evaluating", leave=False):
         volume_1 = data["event_volume_old"].cuda()
         volume_2 = data["event_volume_new"].cuda()

@@ -288,11 +288,14 @@ def train(config):
                 
             total_steps += 1
 
-        # Validate at the end of each epoch
         PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
         torch.save(model.state_dict(), PATH)
 
-        # Get validation results
+        model.eval()
+        # Also include the EPE of the whole Epoch
+        writer.add_scalar("Epoch EPE", np.mean(epe_list), epoch+1)
+
+        # Validate at the end of each epoch
         results, _ = evaluation.evaluate_dsec(model,
                                         data_loaders["validation"],
                                         iters=train_config["iters"])
@@ -300,7 +303,6 @@ def train(config):
         for key in results:
             writer.add_scalar(f"Val_{key}", results[key], epoch+1)
 
-        writer.add_scalar("Epoch EPE", np.mean(epe_list), epoch+1)
 
         model.train()
         # if config["stage"] != 'chairs':
