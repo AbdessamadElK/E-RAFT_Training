@@ -184,6 +184,7 @@ def train(config):
     if config["stage"] != 'chairs':
         model.module.freeze_bn()
 
+    datasets = {}
     data_loaders = {}
     for mode in ["train", "validation"]:
         provider = DatasetProvider(Path(config["path"]),
@@ -192,11 +193,15 @@ def train(config):
                                    hflip = train_config["horizontal_flip"],
                                    vflip = train_config["vertical_flip"], 
                                    representation_type = RepresentationType.VOXEL)
-        loader = DataLoader(provider.get_dataset())
-        data_loaders[mode] = loader
-
-    # TODO: Implement fetch_dataloader function to support other datasets
-    #train_loader = datasets.fetch_dataloader(config)
+        datasets[mode] = provider.get_dataset()
+        
+    if config["validation"]["active"]:
+        for key in datasets:
+            data_loaders[key] = DataLoader(datasets[key])
+    else:
+        # Train on the whole datset when validation is inactive
+        data_loaders["train"] = DataLoader(torch.utils.data.ConcatDataset(datasets.values()))
+        data_loaders["validation"] = None
 
     optimizer, scheduler = fetch_optimizer(config["stage"], train_config, model)
 
@@ -291,22 +296,24 @@ def train(config):
         PATH = 'checkpoints/%d_%s.pth' % (total_steps+1, config["name"])
         torch.save(model.state_dict(), PATH)
 
-        model.eval()
         # Also include the EPE of the whole Epoch
         writer.add_scalar("Epoch EPE", np.mean(epe_list), epoch+1)
 
-        # Validate at the end of each epoch
-        results, _ = evaluation.evaluate_dsec(model,
-                                        data_loaders["validation"],
-                                        iters=train_config["iters"])
+        if data_loaders["validation"] is not None:
+            model.eval()
+            
+            # Validate at the end of each epoch
+            results, _ = evaluation.evaluate_dsec(model,
+                                            data_loaders["validation"],
+                                            iters=train_config["iters"])
 
-        for key in results:
-            writer.add_scalar(f"Val_{key}", results[key], epoch+1)
+            for key in results:
+                writer.add_scalar(f"Val_{key}", results[key], epoch+1)
 
 
-        model.train()
-        # if config["stage"] != 'chairs':
-        #     model.module.freeze_bn()
+            model.train()
+            # if config["stage"] != 'chairs':
+            #     model.module.freeze_bn()
 
             
 
