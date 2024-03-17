@@ -111,9 +111,12 @@ def build(in_path : Path, out_path : Path, policy = "copy"):
 
             for sequence_dir in tqdm(data_dir.iterdir(), desc=description):
                 if flow_sequences is not None:
-                    if not sequence_dir.name in flow_sequences or sequence_dir.is_file():
+                    if not sequence_dir.name in flow_sequences:
                         continue
                 
+                if sequence_dir.is_file():
+                    continue
+
                 overwrite = False
 
                 for sub_dir in sequence_dir.iterdir():
