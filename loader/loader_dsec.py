@@ -488,8 +488,6 @@ class Sequence(Dataset):
         # Apply transforms to the rest of data
         keys = ["flow_gt", "flow_valid", "image"]
 
-        # self.hflip = self.hflip and np.random.rand() < 0.5
-        # self.vflip = self.vflip and np.random.rand() < 0.5
         for key in keys:
 
             if key in output and hflip:
